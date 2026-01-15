@@ -20,7 +20,7 @@ const DecisionMakerDashboard = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Decision Maker Dashboard</h1>
+          <h1 className="text-2xl font-bold text-foreground">Disaster Manager Dashboard</h1>
           <p className="text-muted-foreground">Real-time disaster monitoring and management</p>
         </div>
         <Button className="gap-2">
@@ -38,13 +38,13 @@ const DecisionMakerDashboard = () => {
           variant="danger"
           trend={{ value: 15, positive: false }}
         />
-        <StatsCard
+        {/* <StatsCard
           title={t('ongoingIncidents')}
           value={8}
           icon={Activity}
           variant="warning"
           trend={{ value: 5, positive: false }}
-        />
+        /> */}
         <StatsCard
           title={t('availableResources')}
           value={156}
@@ -52,13 +52,13 @@ const DecisionMakerDashboard = () => {
           variant="success"
           trend={{ value: 10, positive: true }}
         />
-        <StatsCard
+        {/* <StatsCard
           title="Response Rate"
           value="94%"
           icon={TrendingUp}
           variant="default"
           trend={{ value: 3, positive: true }}
-        />
+        /> */}
       </div>
 
       {/* Map and Alerts */}
@@ -129,7 +129,7 @@ const DecisionMakerDashboard = () => {
 const Dashboard = () => {
   const { user } = useAuth();
 
-  if (user?.role === 'decision-maker') {
+  if (user?.role === 'disaster-manager') {
     return (
       <DashboardLayout>
         <DecisionMakerDashboard />
@@ -137,28 +137,36 @@ const Dashboard = () => {
     );
   }
 
-  if (user?.role === 'field-agent') {
+  if (user?.role === 'incident-validator') {
     return (
       <DashboardLayout>
-        <FieldAgentDashboard />
+        <IncidentValidatorDashboard />
+      </DashboardLayout>
+    );
+  }
+
+   if (user?.role === 'response-team') {
+    return (
+      <DashboardLayout>
+        <EmergencyResponseTeamDashboard />
       </DashboardLayout>
     );
   }
 
   return (
     <DashboardLayout>
-      <CitizenDashboard />
+        <EmergencyResponseTeamDashboard />
     </DashboardLayout>
   );
 };
 
-// Field Agent Dashboard
-const FieldAgentDashboard = () => {
+// Incident Validator Dashboard
+const IncidentValidatorDashboard = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Field Agent Dashboard</h1>
-        <p className="text-muted-foreground">Your assigned tasks and incidents</p>
+        <h1 className="text-2xl font-bold text-foreground">Incident Validator Dashboard</h1>
+        <p className="text-muted-foreground">Manage and monitor all submitted incident.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -176,12 +184,12 @@ const FieldAgentDashboard = () => {
 };
 
 // Citizen Dashboard
-const CitizenDashboard = () => {
+const EmergencyResponseTeamDashboard = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Welcome, Citizen</h1>
-        <p className="text-muted-foreground">Stay informed and stay safe</p>
+        <h1 className="text-2xl font-bold text-foreground">Emergency Response Team Dashboard</h1>
+        <p className="text-muted-foreground">Manage resources for alerts.</p>
       </div>
 
       <AlertsList alerts={mockAlerts.filter(a => a.status === 'active')} title="Active Public Alerts" showViewAll={false} />

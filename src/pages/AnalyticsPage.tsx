@@ -75,7 +75,7 @@ const AnalyticsPage = () => {
               </div>
             </CardContent>
           </Card>
-          <Card className="border-border">
+          {/* <Card className="border-border">
             <CardContent className="p-4">
               <div className="flex items-center gap-4">
                 <div className="p-3 rounded-lg bg-chart-1/20">
@@ -87,7 +87,7 @@ const AnalyticsPage = () => {
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
           <Card className="border-border">
             <CardContent className="p-4">
               <div className="flex items-center gap-4">
@@ -101,7 +101,7 @@ const AnalyticsPage = () => {
               </div>
             </CardContent>
           </Card>
-          <Card className="border-border">
+          {/* <Card className="border-border">
             <CardContent className="p-4">
               <div className="flex items-center gap-4">
                 <div className="p-3 rounded-lg bg-destructive/10">
@@ -113,7 +113,7 @@ const AnalyticsPage = () => {
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
         </div>
 
         {/* Charts Row 1 */}
