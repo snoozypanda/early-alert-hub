@@ -20,6 +20,7 @@ import SafetyPage from "./pages/SafetyPage";
 import NotFound from "./pages/NotFound";
 import ViewAlert from "./pages/ViewAlert";
 import EditAlert from "./pages/EditAlert";
+import EditIncident from "./pages/EditIncident";
 // import BroadcastAlert from "./pages/BroadcastAlert";
 
 const queryClient = new QueryClient();
@@ -53,6 +54,10 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
                 <Route path="/alerts/view/:alertId" element={<ViewAlert />} />
                 <Route path="/alerts/edit/:alertId" element={<EditAlert />} />
+                <Route
+                  path="/incidents/edit/:incidentId"
+                  element={<EditIncident />}
+                />
               </Routes>
             </BrowserRouter>
           </AlertsProvider>

@@ -1,10 +1,5 @@
-import {
-  Megaphone,
-  X,
-  Eye,
-  Edit,
-  Plus,
-} from "lucide-react";
+import { Megaphone, X, Eye, Edit, Plus } from "lucide-react";
+import { Label } from "recharts";
 
 export type AlertAction =
   | "broadcast"
@@ -55,6 +50,13 @@ export const alertActionsByRole = {
     {
       action: "add-resource",
       label: "Add Resource",
+      icon: Plus,
+    },
+  ],
+  administrator: [
+    {
+      action: "create-user",
+      Label: "Create User",
       icon: Plus,
     },
   ],

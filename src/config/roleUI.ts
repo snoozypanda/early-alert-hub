@@ -59,11 +59,11 @@ export const roleUI: Record<Role, RoleNavItem[]> = {
       labelKey: "alerts",
       icon: AlertTriangle,
     },
-    {
-      route: "/tasks",
-      labelKey: "tasks",
-      icon: ClipboardList,
-    },
+    // {
+    //   route: "/tasks",
+    //   labelKey: "tasks",
+    //   icon: ClipboardList,
+    // },
     {
       route: "/incidents",
       labelKey: "incidents",

@@ -39,6 +39,9 @@ const AlertsManagement = () => {
   const [filterSeverity, setFilterSeverity] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const itemsPerPage = 5;
   const { user } = useAuth();
   const severityColors = {
     low: "bg-chart-1/20 text-chart-1 border-chart-1/30",
@@ -50,7 +53,7 @@ const AlertsManagement = () => {
   const roleConfig = user?.role ? alertsRoleUI[user.role] : undefined;
   const handleRoleAction = (action?: string) => {
     if (action === "create-alert") {
-      navigate("/alerts/create");
+      navigate("/create/alerts");
     }
   };
 
@@ -70,6 +73,12 @@ const AlertsManagement = () => {
       alert.area.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSeverity && matchesStatus && matchesSearch;
   });
+  const totalPages = Math.ceil(filteredAlerts.length / itemsPerPage);
+
+  const paginatedAlerts = filteredAlerts.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   return (
     <DashboardLayout>
@@ -99,13 +108,13 @@ const AlertsManagement = () => {
           <CardContent className="p-4">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                {/* <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search alerts..."
                   className="pl-10 bg-background"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                />
+                /> */}
               </div>
               <div className="flex gap-2">
                 <Select
@@ -256,6 +265,45 @@ const AlertsManagement = () => {
                 ))}
               </TableBody>
             </Table>
+            <div className="flex items-center justify-between mt-4">
+              <p className="text-sm text-muted-foreground">
+                Page {currentPage} of {totalPages}
+              </p>
+
+              <div className="flex gap-1">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((p) => p - 1)}
+                >
+                  Previous
+                </Button>
+
+                {Array.from({ length: totalPages }).map((_, index) => {
+                  const page = index + 1;
+                  return (
+                    <Button
+                      key={page}
+                      size="sm"
+                      variant={page === currentPage ? "default" : "outline"}
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
+                    </Button>
+                  );
+                })}
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((p) => p + 1)}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>

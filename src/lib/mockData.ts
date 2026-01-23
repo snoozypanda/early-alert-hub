@@ -14,6 +14,7 @@ export interface Alert {
   status: "active" | "monitoring" | "resolved";
   date: string;
   description: string;
+  createdAt: string;
 }
 
 export interface Incident {
@@ -21,9 +22,11 @@ export interface Incident {
   type: string;
   location: string;
   reportedBy: string;
-  status: "pending" | "in-progress" | "resolved";
-  priority: "low" | "medium" | "high";
+  status: "pending" | "approved" | "rejected";
+  priority: "low" | "medium" | "high" | "critical";
   date: string;
+  description: string;
+  createdAt: string;
 }
 
 export interface Resource {
@@ -55,6 +58,7 @@ export const mockAlerts: Alert[] = [
     date: "2024-01-15",
     description:
       "Heavy rainfall expected, potential flooding in low-lying areas",
+    createdAt: "2024-01-15",
   },
   {
     id: "ALT-002",
@@ -64,6 +68,7 @@ export const mockAlerts: Alert[] = [
     status: "active",
     date: "2024-01-14",
     description: "Seismic activity detected, magnitude 4.5",
+    createdAt: "2024-01-14",
   },
   {
     id: "ALT-003",
@@ -73,6 +78,7 @@ export const mockAlerts: Alert[] = [
     status: "monitoring",
     date: "2024-01-13",
     description: "Extended dry period affecting agricultural areas",
+    createdAt: "2024-01-13",
   },
   {
     id: "ALT-004",
@@ -82,6 +88,7 @@ export const mockAlerts: Alert[] = [
     status: "active",
     date: "2024-01-12",
     description: "Soil erosion risk due to recent rains",
+    createdAt: "2024-01-12",
   },
   {
     id: "ALT-005",
@@ -91,6 +98,7 @@ export const mockAlerts: Alert[] = [
     status: "resolved",
     date: "2024-01-11",
     description: "Forest fire contained and extinguished",
+    createdAt: "2024-01-11",
   },
 ];
 
@@ -100,9 +108,11 @@ export const mockIncidents: Incident[] = [
     type: "Building Collapse",
     location: "Addis Ababa",
     reportedBy: "Field Agent",
-    status: "in-progress",
+    status: "approved",
     priority: "high",
     date: "2024-01-15",
+    description: "Forest fire contained and extinguished",
+    createdAt: "2024-01-15",
   },
   {
     id: "INC-002",
@@ -112,15 +122,19 @@ export const mockIncidents: Incident[] = [
     status: "pending",
     priority: "medium",
     date: "2024-01-14",
+    description: "Forest fire contained and extinguished",
+    createdAt: "2024-01-14",
   },
   {
     id: "INC-003",
     type: "Water Contamination",
     location: "Tigray Region",
     reportedBy: "Field Agent",
-    status: "in-progress",
+    status: "rejected",
     priority: "high",
     date: "2024-01-13",
+    description: "Forest fire contained and extinguished",
+    createdAt: "2024-01-13",
   },
 ];
 
@@ -175,40 +189,40 @@ export const mockResources: Resource[] = [
   },
 ];
 
-export const mockTasks: Task[] = [
-  {
-    id: "TSK-001",
-    title: "Flood Assessment - Bole Area",
-    location: "Addis Ababa - Bole",
-    severity: "high",
-    status: "pending",
-    date: "2024-01-15",
-  },
-  {
-    id: "TSK-002",
-    title: "Evacuate Residents - Sector 7",
-    location: "Afar Region",
-    severity: "critical",
-    status: "accepted",
-    date: "2024-01-14",
-  },
-  {
-    id: "TSK-003",
-    title: "Distribute Water Supplies",
-    location: "Somali Region",
-    severity: "medium",
-    status: "in-progress",
-    date: "2024-01-13",
-  },
-  {
-    id: "TSK-004",
-    title: "Road Clearance Operation",
-    location: "SNNPR",
-    severity: "low",
-    status: "completed",
-    date: "2024-01-12",
-  },
-];
+// export const mockTasks: Task[] = [
+//   {
+//     id: "TSK-001",
+//     title: "Flood Assessment - Bole Area",
+//     location: "Addis Ababa - Bole",
+//     severity: "high",
+//     status: "pending",
+//     date: "2024-01-15",
+//   },
+//   {
+//     id: "TSK-002",
+//     title: "Evacuate Residents - Sector 7",
+//     location: "Afar Region",
+//     severity: "critical",
+//     status: "accepted",
+//     date: "2024-01-14",
+//   },
+//   {
+//     id: "TSK-003",
+//     title: "Distribute Water Supplies",
+//     location: "Somali Region",
+//     severity: "medium",
+//     status: "in-progress",
+//     date: "2024-01-13",
+//   },
+//   {
+//     id: "TSK-004",
+//     title: "Road Clearance Operation",
+//     location: "SNNPR",
+//     severity: "low",
+//     status: "completed",
+//     date: "2024-01-12",
+//   },
+// ];
 
 export const mockChartData = {
   alertsByType: [
@@ -294,7 +308,7 @@ export const translations = {
     donation: "Donation",
     users: "Users",
     log: "Log",
-    tasks: "Tasks",
+    // tasks: "Tasks",
     incidents: "Incidents",
   },
   am: {

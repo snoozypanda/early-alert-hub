@@ -1,30 +1,75 @@
-import React, { useState } from 'react';
-import DashboardLayout from '@/components/layout/DashboardLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import React, { useState } from "react";
+import DashboardLayout from "@/components/layout/DashboardLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { Edit, X, Eye } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { FileText, MapPin, Upload, Camera, Send } from 'lucide-react';
-import MapPlaceholder from '@/components/dashboard/MapPlaceholder';
-
+} from "@/components/ui/select";
+import { FileText, MapPin, Upload, Camera, Send } from "lucide-react";
+import MapPlaceholder from "@/components/dashboard/MapPlaceholder";
+import { mockIncidents } from "@/lib/mockData";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 const IncidentReport = () => {
-  const [formData, setFormData] = useState({
-    incidentType: '',
-    location: '',
-    description: '',
-  });
+  const [filterSeverity, setFilterSeverity] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const navigate = useNavigate();
 
+  const itemsPerPage = 5;
+  const [formData, setFormData] = useState({
+    incidentType: "",
+    location: "",
+    description: "",
+  });
+  const statusColors = {
+    active: "bg-destructive/10 text-destructive",
+    monitoring: "bg-chart-4/10 text-chart-4",
+    resolved: "bg-chart-1/10 text-chart-1",
+  };
+  const filteredIncidents = mockIncidents.filter((incident) => {
+    // const matchesSeverity =
+    //   filterSeverity === "all" || incident.severity === filterSeverity;
+    const matchesStatus =
+      filterStatus === "all" || incident.status === filterStatus;
+    const matchesSearch =
+      incident.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      incident.location.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesStatus && matchesSearch;
+  });
+  const totalPages = Math.ceil(filteredIncidents.length / itemsPerPage);
+
+  const paginatedIncidents = filteredIncidents.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    alert('Incident report submitted (UI demo)');
+    alert("Incident report submitted (UI demo)");
+  };
+  const severityColors = {
+    low: "bg-chart-1/20 text-chart-1 border-chart-1/30",
+    medium: "bg-chart-4/20 text-chart-4 border-chart-4/30",
+    high: "bg-destructive/20 text-destructive border-destructive/30",
+    critical: "bg-destructive text-destructive-foreground",
   };
 
   return (
@@ -38,140 +83,132 @@ const IncidentReport = () => {
           <p className="text-muted-foreground">Submit a new incident report</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="border-border">
-            <CardHeader>
-              <CardTitle className="text-lg">Incident Details</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="incidentType">Incident Type</Label>
-                  <Select
-                    value={formData.incidentType}
-                    onValueChange={(value) => setFormData({ ...formData, incidentType: value })}
-                  >
-                    <SelectTrigger className="bg-background">
-                      <SelectValue placeholder="Select incident type" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-card border-border">
-                      <SelectItem value="flood">Flood / Water Damage</SelectItem>
-                      <SelectItem value="collapse">Building Collapse</SelectItem>
-                      <SelectItem value="fire">Fire</SelectItem>
-                      <SelectItem value="road">Road Blockage</SelectItem>
-                      <SelectItem value="medical">Medical Emergency</SelectItem>
-                      <SelectItem value="utilities">Utility Failure</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+        {/* {/* Alerts Table */}
+        <Card className="border-border">
+          <CardHeader>
+            <CardTitle className="text-lg">
+              All Incidents ({filteredIncidents.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow className="border-border">
+                  <TableHead>ID</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Area</TableHead>
+                  <TableHead>Reported By</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredIncidents.map((incident) => (
+                  <TableRow key={incident.id} className="border-border">
+                    <TableCell className="font-mono text-sm">
+                      {incident.id}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {incident.type}
+                    </TableCell>
+                    <TableCell>{incident.location}</TableCell>
+                    <TableCell>
+                      {/* <Badge
+                        className={cn(
+                          "text-xs",
+                          severityColors[incident.severity]
+                        )}
+                      > */}
+                      {incident.reportedBy}
+                      {/* </Badge> */}
+                    </TableCell>
+                    <TableCell>{incident.status}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className={cn("text-xs", statusColors[incident.status])}
+                      >
+                        {incident.priority}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{incident.date}</TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() =>
+                          navigate(`/incidents/view/${incident.id}`)
+                        }
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() =>
+                          navigate(`/incidents/edit/${incident.id}`)
+                        }
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <div className="flex items-center justify-between mt-4">
+              <p className="text-sm text-muted-foreground">
+                Page {currentPage} of {totalPages}
+              </p>
 
-                <div className="space-y-2">
-                  <Label htmlFor="location">Location</Label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="location"
-                      placeholder="Enter location or use GPS"
-                      className="bg-background pl-10"
-                      value={formData.location}
-                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                    />
-                  </div>
-                  <Button variant="outline" size="sm" className="gap-2">
-                    <MapPin className="h-4 w-4" />
-                    Use Current Location
-                  </Button>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    placeholder="Describe the incident in detail..."
-                    className="bg-background min-h-[120px]"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  />
-                </div>
-
-                {/* Media Upload */}
-                <div className="space-y-2">
-                  <Label>Attach Media</Label>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:bg-accent/50 cursor-pointer transition-colors">
-                      <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                      <p className="text-sm text-muted-foreground">Upload Files</p>
-                      <p className="text-xs text-muted-foreground">Images, videos, documents</p>
-                    </div>
-                    <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:bg-accent/50 cursor-pointer transition-colors">
-                      <Camera className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                      <p className="text-sm text-muted-foreground">Take Photo</p>
-                      <p className="text-xs text-muted-foreground">Use camera</p>
-                    </div>
-                  </div>
-                </div>
-
-                <Button type="submit" className="w-full gap-2">
-                  <Send className="h-4 w-4" />
-                  Submit Report
+              <div className="flex gap-1">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((p) => p - 1)}
+                >
+                  Previous
                 </Button>
-              </form>
-            </CardContent>
-          </Card>
 
-          <div className="space-y-6">
-            <Card className="border-border">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-primary" />
-                  Mark Location
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[300px] bg-accent/30 rounded-lg flex items-center justify-center border border-dashed border-border">
-                  <div className="text-center">
-                    <MapPin className="h-12 w-12 text-primary/40 mx-auto mb-2" />
-                    <p className="text-muted-foreground">Click on map to mark incident location</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                {Array.from({ length: totalPages }).map((_, index) => {
+                  const page = index + 1;
+                  return (
+                    <Button
+                      key={page}
+                      size="sm"
+                      variant={page === currentPage ? "default" : "outline"}
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
+                    </Button>
+                  );
+                })}
 
-            <Card className="border-border">
-              <CardHeader>
-                <CardTitle className="text-lg">Quick Tips</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li className="flex items-start gap-2">
-                    <span className="text-primary">•</span>
-                    Provide accurate location information
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-primary">•</span>
-                    Include photos if safe to take them
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-primary">•</span>
-                    Describe any immediate dangers
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-primary">•</span>
-                    Note approximate number of affected people
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-primary">•</span>
-                    Stay safe - do not put yourself at risk
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((p) => p + 1)}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );
 };
-
 export default IncidentReport;
