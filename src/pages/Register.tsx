@@ -32,7 +32,7 @@ const Register = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    role: "citizen" as UserRole,
+    role: "citizen" as UserRole, // fix this shit to use array yeabtsega
     password: "",
     confirmPassword: "",
   });
@@ -75,7 +75,7 @@ const Register = () => {
       username: formData.email.split("@")[0], // currently using email split
       email: formData.email,
       password: formData.password,
-      role: [formData.role],
+      roles: [formData.role],
     };
 
     mutate(submissionData, {
