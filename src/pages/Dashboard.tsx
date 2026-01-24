@@ -5,6 +5,7 @@ import {
   Package,
   Plus,
   TrendingUp,
+  Loader,
 } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import StatsCard from "@/components/dashboard/StatsCard";
@@ -15,6 +16,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { mockAlerts, mockChartData } from "@/lib/mockData";
+import { useDisastersQuery } from "@/lib/api/disasters";
+import { useIncidentsQuery } from "@/lib/api/incidents";
 import {
   PieChart,
   Pie,
@@ -38,6 +41,26 @@ const COLORS = [
 
 const DecisionMakerDashboard = () => {
   const { t } = useLanguage();
+  const { data: disasters = [], isLoading: disastersLoading } =
+    useDisastersQuery();
+  const { data: incidents = [], isLoading: incidentsLoading } =
+    useIncidentsQuery();
+
+  const activeDisasters = disasters.filter((d) => d.status === "active");
+  const pendingIncidents = incidents.filter((i) => i.status === "pending");
+
+  const chartDataByType = disasters.reduce(
+    (acc, d) => {
+      const existing = acc.find((item) => item.name === d.severityLevel);
+      if (existing) {
+        existing.value += 1;
+      } else {
+        acc.push({ name: d.severityLevel, value: 1 });
+      }
+      return acc;
+    },
+    [] as Array<{ name: string; value: number }>
+  );
 
   return (
     <div className="space-y-6">
@@ -60,18 +83,20 @@ const DecisionMakerDashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard
           title={t("activeAlerts")}
-          value={12}
+          value={activeDisasters.length}
           icon={AlertTriangle}
           variant="danger"
           trend={{ value: 15, positive: false }}
+          isLoading={disastersLoading}
         />
-        {/* <StatsCard
-          title={t('ongoingIncidents')}
-          value={8}
+        <StatsCard
+          title="Pending Incidents"
+          value={pendingIncidents.length}
           icon={Activity}
           variant="warning"
           trend={{ value: 5, positive: false }}
-        /> */}
+          isLoading={incidentsLoading}
+        />
         <StatsCard
           title={t("availableResources")}
           value={156}
@@ -79,58 +104,78 @@ const DecisionMakerDashboard = () => {
           variant="success"
           trend={{ value: 10, positive: true }}
         />
-        {/* <StatsCard
-          title="Response Rate"
-          value="94%"
-          icon={TrendingUp}
-          variant="default"
-          trend={{ value: 3, positive: true }}
-        /> */}
       </div>
 
-      {/* Map and Alerts */}
+      {/* Map and Incidents */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <MapPlaceholder />
-        <AlertsList alerts={mockAlerts.slice(0, 4)} />
+        {incidentsLoading ? (
+          <Card className="border-border flex items-center justify-center h-[350px]">
+            <Loader className="h-8 w-8 animate-spin" />
+          </Card>
+        ) : (
+          <AlertsList
+            alerts={incidents.slice(0, 4).map((i) => ({
+              id: i.id,
+              type: i.title,
+              area: i.description.slice(0, 50),
+              severity: (i.severityLevel as any) || "medium",
+              status: (i.status === "approved" ? "active" : "monitoring") as any,
+              date: new Date(i.reportDate).toLocaleDateString(),
+              description: i.description,
+              createdAt: i.reportDate,
+            }))}
+          />
+        )}
       </div>
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="border-border">
           <CardHeader>
-            <CardTitle className="text-lg">Alerts by Type</CardTitle>
+            <CardTitle className="text-lg">Disasters by Severity</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={mockChartData.alertsByType}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={5}
-                    dataKey="value"
-                    label={({ name, value }) => `${name}: ${value}%`}
-                  >
-                    {mockChartData.alertsByType.map((_, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={COLORS[index % COLORS.length]}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
+              {disastersLoading ? (
+                <div className="flex items-center justify-center h-full">
+                  <Loader className="h-8 w-8 animate-spin" />
+                </div>
+              ) : chartDataByType.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={chartDataByType}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={5}
+                      dataKey="value"
+                      label={({ name, value }) => `${name}: ${value}`}
+                    >
+                      {chartDataByType.map((_, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={COLORS[index % COLORS.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  No data available
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-border">
           <CardHeader>
-            <CardTitle className="text-lg">Monthly Alert Trends</CardTitle>
+            <CardTitle className="text-lg">Monthly Disaster Trends</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
@@ -164,9 +209,22 @@ const DecisionMakerDashboard = () => {
 };
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
 
-  if (user?.role === "disaster-manager") {
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-[500px]">
+          <Loader className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Handle user.roles array - get the first role
+  const userRole = Array.isArray(user?.roles) ? user.roles[0] : user?.role;
+
+  if (userRole === "disaster-manager") {
     return (
       <DashboardLayout>
         <DecisionMakerDashboard />
@@ -174,7 +232,7 @@ const Dashboard = () => {
     );
   }
 
-  if (user?.role === "incident-validator") {
+  if (userRole === "incident-validator") {
     return (
       <DashboardLayout>
         <IncidentValidatorDashboard />
@@ -182,7 +240,7 @@ const Dashboard = () => {
     );
   }
 
-  if (user?.role === "response-team") {
+  if (userRole === "response-team") {
     return (
       <DashboardLayout>
         <EmergencyResponseTeamDashboard />
@@ -190,7 +248,7 @@ const Dashboard = () => {
     );
   }
 
-  if (user?.role === "administrator") {
+  if (userRole === "administrator") {
     return (
       <DashboardLayout>
         <AdministratorDashboard />
@@ -207,6 +265,12 @@ const Dashboard = () => {
 
 // Incident Validator Dashboard
 const IncidentValidatorDashboard = () => {
+  const { data: incidents = [], isLoading: incidentsLoading } =
+    useIncidentsQuery();
+
+  const pendingIncidents = incidents.filter((i) => i.status === "pending");
+  const approvedIncidents = incidents.filter((i) => i.status === "approved");
+
   return (
     <div className="space-y-6">
       <div>
@@ -220,22 +284,25 @@ const IncidentValidatorDashboard = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatsCard
-          title="Pending Tasks"
-          value={4}
+          title="Pending Review"
+          value={pendingIncidents.length}
           icon={AlertTriangle}
           variant="warning"
+          isLoading={incidentsLoading}
         />
         <StatsCard
-          title="Active Incidents"
-          value={2}
+          title="Approved Incidents"
+          value={approvedIncidents.length}
           icon={Activity}
           variant="danger"
+          isLoading={incidentsLoading}
         />
         <StatsCard
-          title="Completed Today"
-          value={6}
+          title="Total Incidents"
+          value={incidents.length}
           icon={TrendingUp}
           variant="success"
+          isLoading={incidentsLoading}
         />
       </div>
 
@@ -249,6 +316,11 @@ const IncidentValidatorDashboard = () => {
 
 // Emergency Response Team Dashboard
 const EmergencyResponseTeamDashboard = () => {
+  const { data: disasters = [], isLoading: disastersLoading } =
+    useDisastersQuery();
+
+  const activeDisasters = disasters.filter((d) => d.status === "active");
+
   return (
     <div className="space-y-6">
       <div>
@@ -258,11 +330,26 @@ const EmergencyResponseTeamDashboard = () => {
         <p className="text-muted-foreground">Manage resources for alerts.</p>
       </div>
 
-      <AlertsList
-        alerts={mockAlerts.filter((a) => a.status === "active")}
-        title="Active Public Alerts"
-        showViewAll={false}
-      />
+      {disastersLoading ? (
+        <Card className="border-border flex items-center justify-center h-[350px]">
+          <Loader className="h-8 w-8 animate-spin" />
+        </Card>
+      ) : (
+        <AlertsList
+          alerts={activeDisasters.map((d) => ({
+            id: d.id,
+            type: d.title,
+            area: d.scope,
+            severity: (d.severityLevel as any) || "medium",
+            status: "active" as any,
+            date: new Date(d.startDate).toLocaleDateString(),
+            description: d.description,
+            createdAt: d.startDate,
+          }))}
+          title="Active Public Alerts"
+          showViewAll={false}
+        />
+      )}
 
       <SafetyPanel />
     </div>
@@ -270,20 +357,40 @@ const EmergencyResponseTeamDashboard = () => {
 };
 
 const AdministratorDashboard = () => {
+  const { data: disasters = [], isLoading: disastersLoading } =
+    useDisastersQuery();
+
+  const activeDisasters = disasters.filter((d) => d.status === "active");
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">
-          AdministratorDashboard{" "}
+          Administrator Dashboard
         </h1>
-        <p className="text-muted-foreground">Manage users and user log.</p>
+        <p className="text-muted-foreground">Manage users and system logs.</p>
       </div>
 
-      <AlertsList
-        alerts={mockAlerts.filter((a) => a.status === "active")}
-        title="Active Public Alerts"
-        showViewAll={false}
-      />
+      {disastersLoading ? (
+        <Card className="border-border flex items-center justify-center h-[350px]">
+          <Loader className="h-8 w-8 animate-spin" />
+        </Card>
+      ) : (
+        <AlertsList
+          alerts={activeDisasters.map((d) => ({
+            id: d.id,
+            type: d.title,
+            area: d.scope,
+            severity: (d.severityLevel as any) || "medium",
+            status: "active" as any,
+            date: new Date(d.startDate).toLocaleDateString(),
+            description: d.description,
+            createdAt: d.startDate,
+          }))}
+          title="Active Public Alerts"
+          showViewAll={false}
+        />
+      )}
 
       <SafetyPanel />
     </div>

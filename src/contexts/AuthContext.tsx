@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { useMyProfileQuery } from "@/lib/api/users";
 import { User, LoginInput, AuthTokenOutput, BaseGenericApiResponse } from "@/types/api";
 
-// Map backend roles to frontend roles if needed (or just use string[])
 export type UserRole = "disaster-manager" | "administrator" | "incident-validator" | "response-team" | string;
 
 interface AuthContextType {
@@ -16,55 +17,58 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const hasToken = !!localStorage.getItem("accessToken");
 
-  // Fetch current user on mount
-  useEffect(() => {
-    const fetchUser = async () => {
-      const token = localStorage.getItem("accessToken");
-      if (token) {
-        try {
-          const response = await api.get<BaseGenericApiResponse<User>>("/users/me");
-          setUser(response.data.data);
-        } catch (error) {
-          console.error("Failed to fetch user", error);
-          logout();
-        }
-      }
-      setIsLoading(false);
-    };
+  // Only fetch user if token exists
+  const { data: user = null, isLoading, isError } = useMyProfileQuery();
 
-    fetchUser();
-  }, []);
+  // If token exists but user failed to load, clear token
+  if (hasToken && isError && !isLoading) {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+  }
 
   const login = async (data: LoginInput) => {
     try {
       const response = await api.post<BaseGenericApiResponse<AuthTokenOutput>>("/auth/login", data);
       const { accessToken, refreshToken } = response.data.data;
-      
+
+      // Store tokens in localStorage
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
-      
-      // Fetch user details immediately after login
-      const userResponse = await api.get<BaseGenericApiResponse<User>>("/users/me");
-      setUser(userResponse.data.data);
+
+      // Refetch user data and invalidate other queries
+      await queryClient.refetchQueries({ queryKey: ["profile"] });
     } catch (error) {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
       console.error("Login failed", error);
       throw error;
     }
   };
 
   const logout = () => {
+    // Clear storage
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
-    setUser(null);
+
+    // Clear all queries
+    queryClient.clear();
+
+    // Redirect to login
     window.location.href = "/login";
   };
 
   return (
     <AuthContext.Provider
-      value={{ user, login, logout, isAuthenticated: !!user, isLoading }}
+      value={{
+        user,
+        login,
+        logout,
+        isAuthenticated: !!user && hasToken,
+        isLoading: hasToken ? isLoading : false,
+      }}
     >
       {children}
     </AuthContext.Provider>

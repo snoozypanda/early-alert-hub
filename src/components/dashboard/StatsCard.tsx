@@ -1,5 +1,5 @@
 import React from 'react';
-import { LucideIcon } from 'lucide-react';
+import { LucideIcon, Loader } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
@@ -12,9 +12,10 @@ interface StatsCardProps {
     positive: boolean;
   };
   variant?: 'default' | 'warning' | 'danger' | 'success';
+  isLoading?: boolean;
 }
 
-const StatsCard = ({ title, value, icon: Icon, trend, variant = 'default' }: StatsCardProps) => {
+const StatsCard = ({ title, value, icon: Icon, trend, variant = 'default', isLoading }: StatsCardProps) => {
   const variantStyles = {
     default: 'bg-primary/10 text-primary',
     warning: 'bg-chart-4/20 text-chart-4',
@@ -28,8 +29,10 @@ const StatsCard = ({ title, value, icon: Icon, trend, variant = 'default' }: Sta
         <div className="flex items-start justify-between">
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">{title}</p>
-            <p className="text-3xl font-bold text-foreground">{value}</p>
-            {trend && (
+            <p className="text-3xl font-bold text-foreground">
+              {isLoading ? <Loader className="h-6 w-6 animate-spin" /> : value}
+            </p>
+            {trend && !isLoading && (
               <p className={cn('text-xs', trend.positive ? 'text-chart-1' : 'text-destructive')}>
                 {trend.positive ? '↑' : '↓'} {Math.abs(trend.value)}% from last week
               </p>

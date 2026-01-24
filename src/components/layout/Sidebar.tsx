@@ -18,7 +18,16 @@ const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
 
   if (!user) return null;
 
-  const links = roleUI[user.role];
+  // Handle user.roles array - get the first role that matches our roleUI config
+  const userRole = Array.isArray(user.roles)
+    ? user.roles.find((role) => role in roleUI)
+    : user.role;
+
+  const links = userRole ? roleUI[userRole as keyof typeof roleUI] : [];
+
+  if (!links || links.length === 0) {
+    return null; // No valid role found
+  }
 
   return (
     <aside

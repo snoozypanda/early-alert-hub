@@ -1,6 +1,9 @@
 import axios from "axios";
+import { z } from "zod";
 
-const API_BASE_URL = "/api/v1";
+const VITE_API_URL = z.url();
+const API_BASE_URL =
+  VITE_API_URL.parse(import.meta.env.VITE_API_URL) + "/api/v1";
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -20,7 +23,7 @@ api.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 interface FailedRequest extends Error {
@@ -31,29 +34,33 @@ interface FailedRequest extends Error {
 api.interceptors.response.use(
   (response) => {
     // Unwrapp response data if it follows { meta, data } structure
-    // but we usually want the full response or just data? 
+    // but we usually want the full response or just data?
     // The user requirement said "All success responses: { meta: {}, data: T }"
     return response;
   },
   async (error) => {
     const originalRequest = error.config;
-    
+
     // Access token expired
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
         const refreshToken = localStorage.getItem("refreshToken");
         if (!refreshToken) {
-            // No refresh token, logout
-            throw new Error("No refresh token");
+          // No refresh token, logout
+          throw new Error("No refresh token");
         }
 
-        const response = await axios.post(`${API_BASE_URL}/auth/refresh-token`, {
-          refreshToken,
-        });
+        const response = await axios.post(
+          `${API_BASE_URL}/auth/refresh-token`,
+          {
+            refreshToken,
+          },
+        );
 
-        const { accessToken, refreshToken: newRefreshToken } = response.data.data;
-        
+        const { accessToken, refreshToken: newRefreshToken } =
+          response.data.data;
+
         localStorage.setItem("accessToken", accessToken);
         localStorage.setItem("refreshToken", newRefreshToken);
 
@@ -68,5 +75,5 @@ api.interceptors.response.use(
       }
     }
     return Promise.reject(error);
-  }
+  },
 );
