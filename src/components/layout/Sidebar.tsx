@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { roleUI } from "@/config/roleUI";
+import { Loader } from "lucide-react";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -13,20 +14,96 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const { t } = useLanguage();
 
-  if (!user) return null;
+  // Show skeleton/placeholder while loading
+  if (isLoading || !user) {
+    return (
+      <aside
+        className={cn(
+          "h-[calc(100vh-4rem)] border-r border-border bg-card transition-all duration-300 flex flex-col",
+          collapsed ? "w-16" : "w-64"
+        )}
+      >
+        <nav className="flex-1 p-2 space-y-1 flex items-center justify-center">
+          <Loader className="h-6 w-6 animate-spin text-muted-foreground" />
+        </nav>
+        <div className="p-2 border-t border-border">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-center"
+            onClick={onToggle}
+          >
+            {collapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+      </aside>
+    );
+  }
 
-  // Handle user.roles array - get the first role that matches our roleUI config
-  const userRole = Array.isArray(user.roles)
-    ? user.roles.find((role) => role in roleUI)
-    : user.role;
+  // Handle user.roles array - get the first matching role
+  let userRole: string | undefined;
+  
+  if (Array.isArray(user.roles) && user.roles.length > 0) {
+    // Try to find a role that exists in roleUI
+    userRole = user.roles.find((role) => (role in roleUI));
+    // If no exact match, use the first role anyway
+    if (!userRole) {
+      userRole = user.roles[0];
+    }
+  } else if (user.role && typeof user.role === 'string') {
+    userRole = user.role;
+  }
 
-  const links = userRole ? roleUI[userRole as keyof typeof roleUI] : [];
+  // Debug logging
+  if (!userRole || !(userRole in roleUI)) {
+    console.warn('No valid role found for user:', { 
+      roles: user.roles, 
+      role: user.role,
+      userRole 
+    });
+  }
+
+  const links = userRole && userRole in roleUI 
+    ? roleUI[userRole as keyof typeof roleUI] 
+    : [];
 
   if (!links || links.length === 0) {
-    return null; // No valid role found
+    // Fallback: show empty sidebar with collapse button
+    return (
+      <aside
+        className={cn(
+          "h-[calc(100vh-4rem)] border-r border-border bg-card transition-all duration-300 flex flex-col",
+          collapsed ? "w-16" : "w-64"
+        )}
+      >
+        <nav className="flex-1 p-2 flex items-center justify-center">
+          <p className="text-xs text-muted-foreground text-center">
+            Role: {userRole || 'unknown'}
+          </p>
+        </nav>
+        <div className="p-2 border-t border-border">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-center"
+            onClick={onToggle}
+          >
+            {collapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+      </aside>
+    );
   }
 
   return (
