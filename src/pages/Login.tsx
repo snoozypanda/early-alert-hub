@@ -11,28 +11,31 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
-import { UserRole } from "@/lib/mockData";
+import { toast } from "sonner";
 
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<UserRole>("disaster-manager");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    login(email, password, role);
-    navigate("/dashboard");
+    setIsLoading(true);
+    try {
+      await login({ username, password });
+      toast.success("Logged in successfully");
+      navigate("/dashboard");
+    } catch (error: any) {
+      toast.error("Login failed", {
+        description: error.response?.data?.error?.message || "Invalid credentials",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -60,14 +63,15 @@ const Login = () => {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email / Phone</Label>
+                <Label htmlFor="username">Username</Label>
                 <Input
-                  id="email"
+                  id="username"
                   type="text"
-                  placeholder="Enter your email or phone"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   className="bg-card"
+                  required
                 />
               </div>
 
@@ -81,6 +85,7 @@ const Login = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="bg-card pr-10"
+                    required
                   />
                   <button
                     type="button"
@@ -96,32 +101,8 @@ const Login = () => {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="role">Select Role</Label>
-                <Select
-                  value={role}
-                  onValueChange={(value: UserRole) => setRole(value)}
-                >
-                  <SelectTrigger className="bg-card">
-                    <SelectValue placeholder="Select your role" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-border">
-                    <SelectItem value="disaster-manager">
-                      Disaster Manager
-                    </SelectItem>
-                    <SelectItem value="response-team">
-                      Emergency Response Team
-                    </SelectItem>
-                    <SelectItem value="incident-validator">
-                      Incident Validator
-                    </SelectItem>
-                    <SelectItem value="administrator">Administrator</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <Button type="submit" className="w-full">
-                Sign In
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Signing in..." : "Sign In"}
               </Button>
 
               <div className="text-center">

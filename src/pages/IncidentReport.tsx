@@ -5,20 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Edit, X, Eye } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { FileText, MapPin, Upload, Camera, Send } from "lucide-react";
-import MapPlaceholder from "@/components/dashboard/MapPlaceholder";
-import { mockIncidents } from "@/lib/mockData";
+import { Edit, X, Eye, FileText, Plus } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -27,76 +14,196 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useQuery } from "@tanstack/react-query";
+import { api } from "@/lib/api";
+import { Incident, BaseGenericApiResponse } from "@/types/api";
+import { format } from "date-fns";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+
 const IncidentReport = () => {
-  const [filterSeverity, setFilterSeverity] = useState<string>("all");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
-
+  const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-  const [formData, setFormData] = useState({
-    incidentType: "",
-    location: "",
-    description: "",
-  });
-  const statusColors = {
-    active: "bg-destructive/10 text-destructive",
-    monitoring: "bg-chart-4/10 text-chart-4",
-    resolved: "bg-chart-1/10 text-chart-1",
-  };
-  const filteredIncidents = mockIncidents.filter((incident) => {
-    // const matchesSeverity =
-    //   filterSeverity === "all" || incident.severity === filterSeverity;
-    const matchesStatus =
-      filterStatus === "all" || incident.status === filterStatus;
-    const matchesSearch =
-      incident.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      incident.location.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesStatus && matchesSearch;
-  });
-  const totalPages = Math.ceil(filteredIncidents.length / itemsPerPage);
 
-  const paginatedIncidents = filteredIncidents.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    alert("Incident report submitted (UI demo)");
+  // New incident form state
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    latitude: 0,
+    longitude: 0,
+    severityLevel: "low",
+    attachments: [] as string[],
+  });
+
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ["incidents", currentPage],
+    queryFn: async () => {
+      // Backend supports limit & offset but let's stick to getting all for now or simple pagination if supported
+      // Using arbitrary limit for now or just fetching default
+      const res = await api.get<BaseGenericApiResponse<Incident[]>>(`/incident?limit=${itemsPerPage}&offset=${(currentPage - 1) * itemsPerPage}`);
+      return res.data;
+    },
+  });
+  
+  const incidents = data?.data || [];
+  // Note: Backend might retrieve a { meta: { total: number }, data: [] } 
+  // but the prompt example says:
+  // GET /api/v1/incident
+  // Response: { meta: {}, data: [...] }
+  // It doesn't explicitly show total count in meta. I'll assume simple pagination or client-side calculation if total is missing,
+  // but for server-side pagination efficiently we need total count.
+  // For now, I will assume the list is just the page.
+  
+  const statusColors: Record<string, string> = {
+    active: "bg-destructive/10 text-destructive",
+    pending: "bg-yellow-500/10 text-yellow-600",
+    monitoring: "bg-blue-500/10 text-blue-600",
+    resolved: "bg-green-500/10 text-green-600",
+    approved: "bg-green-500/10 text-green-600",
+    rejected: "bg-red-500/10 text-red-600",
   };
-  const severityColors = {
-    low: "bg-chart-1/20 text-chart-1 border-chart-1/30",
-    medium: "bg-chart-4/20 text-chart-4 border-chart-4/30",
-    high: "bg-destructive/20 text-destructive border-destructive/30",
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await api.post("/incident", formData);
+      toast.success("Incident reported successfully");
+      setIsDialogOpen(false);
+      setFormData({
+         title: "",
+         description: "",
+         latitude: 0,
+         longitude: 0,
+         severityLevel: "low",
+         attachments: [],
+      });
+      refetch();
+    } catch (error: any) {
+      toast.error("Failed to create incident", {
+        description: error.response?.data?.error?.message || "Unknown error",
+      });
+    }
+  };
+
+  const severityColors: Record<string, string> = {
+    low: "bg-green-500/20 text-green-600 border-green-500/30",
+    medium: "bg-yellow-500/20 text-yellow-600 border-yellow-500/30",
+    high: "bg-orange-500/20 text-orange-600 border-orange-500/30",
     critical: "bg-destructive text-destructive-foreground",
   };
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <FileText className="h-6 w-6 text-primary" />
-            Report Incident
-          </h1>
-          <p className="text-muted-foreground">Submit a new incident report</p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+              <FileText className="h-6 w-6 text-primary" />
+              Incidents
+            </h1>
+            <p className="text-muted-foreground">Manage and report incidents</p>
+          </div>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+                <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Report Incident
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                    <DialogTitle>Report New Incident</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleCreate} className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="title">Title</Label>
+                        <Input 
+                            id="title" 
+                            value={formData.title} 
+                            onChange={(e) => setFormData({...formData, title: e.target.value})} 
+                            required 
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="description">Description</Label>
+                        <Textarea 
+                            id="description" 
+                            value={formData.description} 
+                            onChange={(e) => setFormData({...formData, description: e.target.value})} 
+                            required 
+                        />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="lat">Latitude</Label>
+                            <Input 
+                                id="lat" 
+                                type="number" 
+                                step="any"
+                                value={formData.latitude} 
+                                onChange={(e) => setFormData({...formData, latitude: parseFloat(e.target.value)})} 
+                                required 
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="long">Longitude</Label>
+                            <Input 
+                                id="long" 
+                                type="number" 
+                                step="any"
+                                value={formData.longitude} 
+                                onChange={(e) => setFormData({...formData, longitude: parseFloat(e.target.value)})} 
+                                required 
+                            />
+                        </div>
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="severity">Severity</Label>
+                        <Select 
+                            value={formData.severityLevel} 
+                            onValueChange={(val) => setFormData({...formData, severityLevel: val})}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select severity" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="low">Low</SelectItem>
+                                <SelectItem value="medium">Medium</SelectItem>
+                                <SelectItem value="high">High</SelectItem>
+                                <SelectItem value="critical">Critical</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <Button type="submit" className="w-full">Submit Report</Button>
+                </form>
+            </DialogContent>
+          </Dialog>
         </div>
 
-        {/* {/* Alerts Table */}
         <Card className="border-border">
           <CardHeader>
             <CardTitle className="text-lg">
-              All Incidents ({filteredIncidents.length})
+              All Incidents
             </CardTitle>
           </CardHeader>
           <CardContent>
+            {isLoading ? (
+                <div className="text-center py-4">Loading incidents...</div>
+            ) : (
+            <>
             <Table>
               <TableHeader>
                 <TableRow className="border-border">
                   <TableHead>ID</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Area</TableHead>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Severity</TableHead>
                   <TableHead>Reported By</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Date</TableHead>
@@ -104,46 +211,46 @@ const IncidentReport = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredIncidents.map((incident) => (
+                {incidents.length === 0 && (
+                    <TableRow>
+                        <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                            No incidents found.
+                        </TableCell>
+                    </TableRow>
+                )}
+                {incidents.map((incident) => (
                   <TableRow key={incident.id} className="border-border">
                     <TableCell className="font-mono text-sm">
                       {incident.id}
                     </TableCell>
                     <TableCell className="font-medium">
-                      {incident.type}
+                      {incident.title}
                     </TableCell>
-                    <TableCell>{incident.location}</TableCell>
                     <TableCell>
-                      {/* <Badge
+                      <Badge
                         className={cn(
                           "text-xs",
-                          severityColors[incident.severity]
+                          severityColors[incident.severityLevel?.toLowerCase()] || severityColors.low
                         )}
-                      > */}
-                      {incident.reportedBy}
-                      {/* </Badge> */}
+                      >
+                        {incident.severityLevel}
+                      </Badge>
                     </TableCell>
-                    <TableCell>{incident.status}</TableCell>
+                    <TableCell>
+                      {incident.reportedBy?.name || "Unknown"}
+                    </TableCell>
                     <TableCell>
                       <Badge
                         variant="outline"
-                        className={cn("text-xs", statusColors[incident.status])}
+                        className={cn("text-xs", statusColors[incident.status?.toLowerCase()] || "bg-gray-100")}
                       >
-                        {incident.priority}
+                        {incident.status}
                       </Badge>
                     </TableCell>
-                    <TableCell>{incident.date}</TableCell>
+                    <TableCell>
+                        {incident.reportDate ? format(new Date(incident.reportDate), "MMM dd, yyyy") : "-"}
+                    </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() =>
-                          navigate(`/incidents/view/${incident.id}`)
-                        }
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -154,57 +261,34 @@ const IncidentReport = () => {
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-destructive"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-            <div className="flex items-center justify-between mt-4">
-              <p className="text-sm text-muted-foreground">
-                Page {currentPage} of {totalPages}
-              </p>
-
-              <div className="flex gap-1">
+            
+            {/* Simple Pagination Controls */}
+             <div className="flex items-center justify-end space-x-2 py-4">
                 <Button
-                  size="sm"
                   variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                   disabled={currentPage === 1}
-                  onClick={() => setCurrentPage((p) => p - 1)}
                 >
                   Previous
                 </Button>
-
-                {Array.from({ length: totalPages }).map((_, index) => {
-                  const page = index + 1;
-                  return (
-                    <Button
-                      key={page}
-                      size="sm"
-                      variant={page === currentPage ? "default" : "outline"}
-                      onClick={() => setCurrentPage(page)}
-                    >
-                      {page}
-                    </Button>
-                  );
-                })}
-
+                <div className="text-sm">Page {currentPage}</div>
                 <Button
-                  size="sm"
                   variant="outline"
-                  disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage((p) => p + 1)}
+                  size="sm"
+                  onClick={() => setCurrentPage((prev) => prev + 1)}
+                  disabled={incidents.length < itemsPerPage}
                 >
                   Next
                 </Button>
               </div>
-            </div>
+            </>
+            )}
           </CardContent>
         </Card>
       </div>

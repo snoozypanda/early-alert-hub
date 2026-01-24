@@ -1,50 +1,70 @@
-import React, { createContext, useContext, useState, ReactNode } from "react";
-import { UserRole } from "@/lib/mockData";
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { api } from "@/lib/api";
+import { User, LoginInput, AuthTokenOutput, BaseGenericApiResponse } from "@/types/api";
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-}
+// Map backend roles to frontend roles if needed (or just use string[])
+export type UserRole = "disaster-manager" | "administrator" | "incident-validator" | "response-team" | string;
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string, role: UserRole) => void;
+  login: (data: LoginInput) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const login = (email: string, _password: string, role: UserRole) => {
-    // Mock login - just set user based on role
-    setUser({
-      id: "1",
-      name:
-        role === "disaster-manager"
-          ? "Dr. Abebe Kebede"
-          : role === "incident-validator"
-          ? "Agent Meron Tadesse"
-          : role === "administrator"
-          ? "Mr. Tesfaye Bekele"
-          : "Response Team Member",
+  // Fetch current user on mount
+  useEffect(() => {
+    const fetchUser = async () => {
+      const token = localStorage.getItem("accessToken");
+      if (token) {
+        try {
+          const response = await api.get<BaseGenericApiResponse<User>>("/users/me");
+          setUser(response.data.data);
+        } catch (error) {
+          console.error("Failed to fetch user", error);
+          logout();
+        }
+      }
+      setIsLoading(false);
+    };
 
-      email,
-      role,
-    });
+    fetchUser();
+  }, []);
+
+  const login = async (data: LoginInput) => {
+    try {
+      const response = await api.post<BaseGenericApiResponse<AuthTokenOutput>>("/auth/login", data);
+      const { accessToken, refreshToken } = response.data.data;
+      
+      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
+      
+      // Fetch user details immediately after login
+      const userResponse = await api.get<BaseGenericApiResponse<User>>("/users/me");
+      setUser(userResponse.data.data);
+    } catch (error) {
+      console.error("Login failed", error);
+      throw error;
+    }
   };
 
   const logout = () => {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
     setUser(null);
+    window.location.href = "/login";
   };
 
   return (
     <AuthContext.Provider
-      value={{ user, login, logout, isAuthenticated: !!user }}
+      value={{ user, login, logout, isAuthenticated: !!user, isLoading }}
     >
       {children}
     </AuthContext.Provider>
