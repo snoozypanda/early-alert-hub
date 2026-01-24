@@ -12,10 +12,7 @@ export const useLoginUserMutation = () => {
   return useMutation({
     mutationFn: loginUserFunc,
     onSuccess: (responseData) => {
-      localStorage.setItem(
-        "Authorization",
-        `Bearer ${responseData.data.accessToken}`,
-      );
+      localStorage.setItem("accessToken", responseData.data.accessToken);
       localStorage.setItem("refreshToken", responseData.data.refreshToken);
     },
   });

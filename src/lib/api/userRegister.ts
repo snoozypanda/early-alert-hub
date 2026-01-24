@@ -12,7 +12,8 @@ export const useRegisterUserMutation = () => {
   return useMutation({
     mutationFn: registerUserFunc,
     onSuccess: (responseData) => {
-      localStorage.setItem("Authorization", `Bearer ${responseData.token}`);
+      localStorage.setItem("accessToken", responseData.data.accessToken);
+      localStorage.setItem("refreshToken", responseData.data.refreshToken);
     },
   });
 };
