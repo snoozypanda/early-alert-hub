@@ -11,30 +11,45 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { useLoginUserMutation } from "@/lib/api/userLogin";
+import { LoginUserType } from "@/types/types";
 
 const Login = () => {
+  const { mutate, isPending } = useLoginUserMutation();
   const navigate = useNavigate();
-  const { login } = useAuth();
-  const [showPassword, setShowPassword] = useState(false);
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const [showPassword, setShowPassword] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
+  const [formData, setFormData] = useState<LoginUserType>({
+    username: "",
+    password: "",
+  });
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsLoading(true);
+
+    if (!formData.username || !formData.password) {
+      toast.error("Username and password are required");
+      return;
+    }
+
     try {
-      await login({ username, password });
-      toast.success("Logged in successfully");
-      navigate("/dashboard");
-    } catch (error: any) {
-      toast.error("Login failed", {
-        description: error.response?.data?.error?.message || "Invalid credentials",
+      const submissionData: LoginUserType = {
+        username: formData.username,
+        password: formData.password,
+      };
+
+      mutate(submissionData, {
+        onSuccess: () => {
+          navigate("/dashboard");
+        },
+        onError: (error) => {
+          toast.error("Invalid credentials");
+        },
       });
     } finally {
-      setIsLoading(false);
+      setLocalError(null);
     }
   };
 
@@ -68,10 +83,11 @@ const Login = () => {
                   id="username"
                   type="text"
                   placeholder="Enter your username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  value={formData.username}
+                  onChange={(e) =>
+                    setFormData({ ...formData, username: e.target.value })
+                  }
                   className="bg-card"
-                  required
                 />
               </div>
 
@@ -82,10 +98,11 @@ const Login = () => {
                     id="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    value={formData.password}
+                    onChange={(e) =>
+                      setFormData({ ...formData, password: e.target.value })
+                    }
                     className="bg-card pr-10"
-                    required
                   />
                   <button
                     type="button"
@@ -101,8 +118,8 @@ const Login = () => {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Signing in..." : "Sign In"}
+              <Button type="submit" className="w-full" disabled={isPending}>
+                {isPending ? "Signing in..." : "Sign In"}
               </Button>
 
               <div className="text-center">
