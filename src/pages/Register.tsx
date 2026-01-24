@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Eye, EyeOff, Shield } from "lucide-react";
+import { Eye, EyeOff, Shield, Loader } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,9 +21,11 @@ import {
 import { UserRole } from "@/lib/mockData";
 import type { NewUserType } from "@/types/types";
 import { useRegisterUserMutation } from "@/lib/api/userRegister";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Register = () => {
   const { mutate, isPending } = useRegisterUserMutation();
+  const { isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
 
   const [showPassword, setShowPassword] = useState(false);
@@ -36,6 +38,27 @@ const Register = () => {
     password: "",
     confirmPassword: "",
   });
+
+  // Redirect to dashboard if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Don't render register form if already authenticated
+  if (isAuthenticated) {
+    return null;
+  }
 
   const passwordsMatch =
     formData.password === formData.confirmPassword ||
