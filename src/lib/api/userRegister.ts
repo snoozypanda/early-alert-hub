@@ -1,13 +1,18 @@
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import { apiURL } from "./index";
-import type { newUserType } from "@/types/types";
+import type { NewUserType } from "@/types/types";
 
-const registerUserFunc = async (newUser: newUserType) => {
+const registerUserFunc = async (newUser: NewUserType) => {
   const response = await axios.post(`${apiURL}/auth/register`, newUser);
   return response.data;
 };
 
 export const useRegisterUserMutation = () => {
-  return useMutation({ mutationFn: registerUserFunc });
+  return useMutation({
+    mutationFn: registerUserFunc,
+    onSuccess: (responseData) => {
+      localStorage.setItem("Authorization", `Bearer ${responseData.token}`);
+    },
+  });
 };
