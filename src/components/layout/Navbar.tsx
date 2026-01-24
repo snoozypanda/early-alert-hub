@@ -25,6 +25,14 @@ const Navbar = () => {
     navigate('/login');
   };
 
+  const handleProfileClick = () => {
+    navigate('/users');
+  };
+
+  const handleSettingsClick = () => {
+    navigate('/settings');
+  };
+
   return (
     <header className="h-16 border-b border-border bg-card px-4 flex items-center justify-between sticky top-0 z-50">
       <div className="flex items-center gap-4">
@@ -78,15 +86,17 @@ const Navbar = () => {
             <DropdownMenuLabel>
               <div className="flex flex-col">
                 <span className="font-medium">{user?.name}</span>
-                <span className="text-xs text-muted-foreground capitalize">{user?.role?.replace('-', ' ')}</span>
+                <span className="text-xs text-muted-foreground capitalize">
+                  {Array.isArray(user?.roles) ? user.roles[0]?.replace(/-/g, ' ') : user?.role?.replace('-', ' ')}
+                </span>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleProfileClick}>
               <User className="mr-2 h-4 w-4" />
               Profile
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleSettingsClick}>
               <Settings className="mr-2 h-4 w-4" />
               {t('settings')}
             </DropdownMenuItem>

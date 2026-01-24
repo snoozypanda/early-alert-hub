@@ -10,6 +10,7 @@ import { AlertsProvider } from "./contexts/AlertContext";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
+import User from "./pages/User";
 import AlertsManagement from "./pages/AlertsManagement";
 import CreateAlert from "./pages/CreateAlert";
 import ResourcesPage from "./pages/ResourcesPage";
@@ -39,6 +40,7 @@ const App = () => (
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/users" element={<User />} />
                 <Route path="/alerts" element={<AlertsManagement />} />
                 <Route path="/create-alert" element={<CreateAlert />} />
                 <Route path="/resources" element={<ResourcesPage />} />
