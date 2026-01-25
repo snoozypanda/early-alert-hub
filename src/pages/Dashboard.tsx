@@ -6,7 +6,9 @@ import {
   Plus,
   TrendingUp,
   Loader,
+  ArrowRight,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import StatsCard from "@/components/dashboard/StatsCard";
 import AlertsList from "@/components/dashboard/AlertsList";
@@ -41,6 +43,7 @@ const COLORS = [
 ];
 
 const DecisionMakerDashboard = () => {
+  const navigate = useNavigate();
   const { t } = useLanguage();
   const { data: disasters = [], isLoading: disastersLoading } =
     useDisastersQuery();
@@ -74,10 +77,20 @@ const DecisionMakerDashboard = () => {
             Real-time disaster monitoring and management
           </p>
         </div>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          {t("issueAlert")}
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            className="gap-2"
+            onClick={() => navigate("/disasters")}
+            variant="outline"
+          >
+            <ArrowRight className="h-4 w-4" />
+            Manage Disasters
+          </Button>
+          <Button className="gap-2">
+            <Plus className="h-4 w-4" />
+            {t("issueAlert")}
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -276,6 +289,7 @@ const Dashboard = () => {
 
 // Incident Validator Dashboard
 const IncidentValidatorDashboard = () => {
+  const navigate = useNavigate();
   const { data: incidents = [], isLoading: incidentsLoading } =
     useIncidentsQuery();
 
@@ -284,13 +298,23 @@ const IncidentValidatorDashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">
-          Incident Validator Dashboard
-        </h1>
-        <p className="text-muted-foreground">
-          Manage and monitor all submitted incident.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">
+            Incident Validator Dashboard
+          </h1>
+          <p className="text-muted-foreground">
+            Manage and monitor all submitted incident.
+          </p>
+        </div>
+        <Button 
+          className="gap-2"
+          onClick={() => navigate("/incidents")}
+          variant="outline"
+        >
+          <ArrowRight className="h-4 w-4" />
+          View All Incidents
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -327,6 +351,7 @@ const IncidentValidatorDashboard = () => {
 
 // Emergency Response Team Dashboard
 const EmergencyResponseTeamDashboard = () => {
+  const navigate = useNavigate();
   const { data: disasters = [], isLoading: disastersLoading } =
     useDisastersQuery();
 
@@ -334,11 +359,23 @@ const EmergencyResponseTeamDashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">
-          Emergency Response Team Dashboard
-        </h1>
-        <p className="text-muted-foreground">Manage resources for alerts.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">
+            Emergency Response Team Dashboard
+          </h1>
+          <p className="text-muted-foreground">Manage resources for alerts.</p>
+        </div>
+        <div className="flex gap-2">
+          <Button 
+            className="gap-2"
+            onClick={() => navigate("/resources")}
+            variant="outline"
+          >
+            <ArrowRight className="h-4 w-4" />
+            View Resources
+          </Button>
+        </div>
       </div>
 
       {disastersLoading ? (
@@ -368,6 +405,7 @@ const EmergencyResponseTeamDashboard = () => {
 };
 
 const AdministratorDashboard = () => {
+  const navigate = useNavigate();
   const { data: disasters = [], isLoading: disastersLoading } =
     useDisastersQuery();
 
@@ -375,11 +413,23 @@ const AdministratorDashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">
-          Administrator Dashboard
-        </h1>
-        <p className="text-muted-foreground">Manage users and system logs.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">
+            Administrator Dashboard
+          </h1>
+          <p className="text-muted-foreground">Manage users and system logs.</p>
+        </div>
+        <div className="flex gap-2">
+          <Button 
+            className="gap-2"
+            onClick={() => navigate("/users")}
+            variant="outline"
+          >
+            <ArrowRight className="h-4 w-4" />
+            Manage Users
+          </Button>
+        </div>
       </div>
 
       {disastersLoading ? (

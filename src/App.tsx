@@ -22,6 +22,8 @@ import NotFound from "./pages/NotFound";
 import ViewAlert from "./pages/ViewAlert";
 import EditAlert from "./pages/EditAlert";
 import EditIncident from "./pages/EditIncident";
+import Incidents from "./pages/Incidents";
+import Disasters from "./pages/Disasters";
 // import BroadcastAlert from "./pages/BroadcastAlert";
 
 const queryClient = new QueryClient();
@@ -47,12 +49,13 @@ const App = () => (
                 <Route path="/analytics" element={<AnalyticsPage />} />
                 <Route path="/chat" element={<ChatPage />} />
                 <Route path="/report-incident" element={<IncidentReport />} />
-                <Route path="/incidents" element={<IncidentReport />} />
+                <Route path="/incidents" element={<Incidents />} />
                 <Route path="/tasks" element={<Dashboard />} />
                 <Route path="/public-alerts" element={<AlertsManagement />} />
                 <Route path="/safety" element={<SafetyPage />} />
                 <Route path="/reports" element={<AlertsManagement />} />
                 <Route path="/settings" element={<Dashboard />} />
+                <Route path="/disasters" element={<Disasters />} />
                 <Route path="*" element={<NotFound />} />
                 <Route path="/alerts/view/:alertId" element={<ViewAlert />} />
                 <Route path="/alerts/edit/:alertId" element={<EditAlert />} />
