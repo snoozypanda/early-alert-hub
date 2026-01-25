@@ -13,8 +13,8 @@ export const getMyProfile = async () => {
   return response.data.data;
 };
 
-export const updateMyProfile = async (data: { name?: string; email?: string; username?: string }) => {
-  const response = await api.patch<{ data: UserType }>("/users/me", data);
+export const updateMyProfile = async (userId: number, data: { name?: string; email?: string; username?: string }) => {
+  const response = await api.patch<{ data: UserType }>(`/users/${userId}`, data);
   return response.data.data;
 };
 
@@ -53,10 +53,14 @@ export const useUpdateMyProfileMutation = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: updateMyProfile,
+    mutationFn: ({ userId, data }: { userId: number; data: { name?: string; email?: string; username?: string } }) => 
+      updateMyProfile(userId, data),
     onSuccess: (data) => {
-      // Update the cache with new profile data
+      // Update the cache with new profile data immediately
       queryClient.setQueryData(["profile"], data);
+      
+      // Invalidate and refetch the profile query to ensure UI is in sync with latest server data
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
     },
   });
 };

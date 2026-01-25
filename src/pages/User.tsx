@@ -43,8 +43,10 @@ const User = () => {
   };
 
   const handleSave = async () => {
+    if (!user) return;
+    
     try {
-      updateProfile(formData, {
+      updateProfile({ userId: user.id, data: formData }, {
         onSuccess: () => {
           setEditMode(false);
           toast.success("Profile updated successfully");
@@ -253,23 +255,7 @@ const User = () => {
                 </div>
               </div>
 
-              <div className="p-3 rounded-lg border border-border bg-background">
-                <p className="text-sm text-muted-foreground">User ID</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <p className="text-foreground font-mono text-sm">{user.id}</p>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleCopy(user.id.toString())}
-                  >
-                    {copied ? (
-                      <Check className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-              </div>
+
             </div>
 
             {/* Roles */}
