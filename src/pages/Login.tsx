@@ -65,10 +65,13 @@ const Login = () => {
 
       mutate(submissionData, {
         onSuccess: () => {
-          navigate("/dashboard");
+          toast.success("Login successful!");
+          // The useEffect above will automatically redirect to /dashboard
+          // when isAuthenticated becomes true
         },
-        onError: (error) => {
-          toast.error("Invalid credentials");
+        onError: (error: any) => {
+          const errorMessage = error?.response?.data?.message || "Invalid credentials";
+          toast.error(errorMessage);
         },
       });
     } finally {
@@ -141,8 +144,15 @@ const Login = () => {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full" disabled={isPending}>
-                {isPending ? "Signing in..." : "Sign In"}
+              <Button type="submit" className="w-full" disabled={isPending || isLoading}>
+                {isPending || isLoading ? (
+                  <>
+                    <Loader className="h-4 w-4 mr-2 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  "Sign In"
+                )}
               </Button>
 
               <div className="text-center">

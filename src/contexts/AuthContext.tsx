@@ -18,10 +18,10 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const queryClient = useQueryClient();
-  const hasToken = !!localStorage.getItem("accessToken");
 
   // Only fetch user if token exists
   const { data: user = null, isLoading, isError } = useMyProfileQuery();
+  const hasToken = !!localStorage.getItem("accessToken");
 
   // If token exists but user failed to load, clear token
   if (hasToken && isError && !isLoading) {

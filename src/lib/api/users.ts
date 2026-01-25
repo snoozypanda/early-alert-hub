@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import { api } from "../api";
 import { UserType } from "@/types/types";
 
@@ -25,7 +26,20 @@ export const useUsersQuery = () => {
 };
 
 export const useMyProfileQuery = () => {
-  const hasToken = !!localStorage.getItem("accessToken");
+  const [hasToken, setHasToken] = useState(!!localStorage.getItem("accessToken"));
+
+  useEffect(() => {
+    // Check token immediately
+    setHasToken(!!localStorage.getItem("accessToken"));
+
+    // Also listen to custom event for token changes
+    const handleTokenChange = () => {
+      setHasToken(!!localStorage.getItem("accessToken"));
+    };
+
+    window.addEventListener("token-change", handleTokenChange);
+    return () => window.removeEventListener("token-change", handleTokenChange);
+  }, []);
   
   return useQuery({
     queryKey: ["profile"],
