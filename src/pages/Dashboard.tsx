@@ -18,6 +18,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { mockAlerts, mockChartData } from "@/lib/mockData";
 import { useDisastersQuery } from "@/lib/api/disasters";
 import { useIncidentsQuery } from "@/lib/api/incidents";
+import { normalizeRole } from "@/config/roleUI";
 import {
   PieChart,
   Pie,
@@ -221,8 +222,18 @@ const Dashboard = () => {
     );
   }
 
-  // Handle user.roles array - get the first role
-  const userRole = Array.isArray(user?.roles) ? user.roles[0] : user?.role;
+  // Handle user.roles array - normalize and get the first valid role
+  let userRole: string | undefined;
+  
+  if (Array.isArray(user?.roles) && user.roles.length > 0) {
+    for (const role of user.roles) {
+      const normalized = normalizeRole(role);
+      if (normalized) {
+        userRole = normalized;
+        break;
+      }
+    }
+  }
 
   if (userRole === "disaster-manager") {
     return (

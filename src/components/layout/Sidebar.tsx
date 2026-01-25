@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
-import { roleUI } from "@/config/roleUI";
+import { roleUI, normalizeRole } from "@/config/roleUI";
 import { Loader } from "lucide-react";
 
 interface SidebarProps {
@@ -22,7 +22,7 @@ const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
     return (
       <aside
         className={cn(
-          "h-[calc(100vh-4rem)] border-r border-border bg-card transition-all duration-300 flex flex-col",
+          "fixed left-0 top-16 h-[calc(100vh-4rem)] border-r border-border bg-card transition-all duration-300 flex flex-col",
           collapsed ? "w-16" : "w-64"
         )}
       >
@@ -47,26 +47,29 @@ const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
     );
   }
 
-  // Handle user.roles array - get the first matching role
+  // Handle user.roles array - normalize and get the first matching role
   let userRole: string | undefined;
   
   if (Array.isArray(user.roles) && user.roles.length > 0) {
-    // Try to find a role that exists in roleUI
-    userRole = user.roles.find((role) => (role in roleUI));
-    // If no exact match, use the first role anyway
-    if (!userRole) {
-      userRole = user.roles[0];
+    // Try to find a role that can be normalized
+    for (const role of user.roles) {
+      const normalized = normalizeRole(role);
+      if (normalized) {
+        userRole = normalized;
+        break;
+      }
     }
-  } else if (user.role && typeof user.role === 'string') {
-    userRole = user.role;
+    // If no valid role found, log the raw roles for debugging
+    if (!userRole) {
+      console.warn('No valid role found in user roles:', user.roles);
+    }
   }
 
   // Debug logging
   if (!userRole || !(userRole in roleUI)) {
-    console.warn('No valid role found for user:', { 
+    console.warn('No valid UI role found for user:', { 
       roles: user.roles, 
-      role: user.role,
-      userRole 
+      normalizedUserRole: userRole 
     });
   }
 
@@ -79,7 +82,7 @@ const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
     return (
       <aside
         className={cn(
-          "h-[calc(100vh-4rem)] border-r border-border bg-card transition-all duration-300 flex flex-col",
+          "fixed left-0 top-16 h-[calc(100vh-4rem)] border-r border-border bg-card transition-all duration-300 flex flex-col",
           collapsed ? "w-16" : "w-64"
         )}
       >
@@ -109,7 +112,7 @@ const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
   return (
     <aside
       className={cn(
-        "h-[calc(100vh-4rem)] border-r border-border bg-card transition-all duration-300 flex flex-col",
+        "fixed left-0 top-16 h-[calc(100vh-4rem)] border-r border-border bg-card transition-all duration-300 flex flex-col",
         collapsed ? "w-16" : "w-64"
       )}
     >

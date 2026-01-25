@@ -16,6 +16,35 @@ export type Role =
   | "incident-validator"
   | "response-team"
   | "administrator";
+
+// Map backend API roles (uppercase) to UI roles (lowercase)
+export const roleMap: Record<string, Role> = {
+  // Exact matches
+  "DISASTER-MANAGER": "disaster-manager",
+  "INCIDENT-VALIDATOR": "incident-validator",
+  "RESPONSE-TEAM": "response-team",
+  "ADMINISTRATOR": "administrator",
+  
+  // Variations (with spaces instead of hyphens)
+  "DISASTER MANAGER": "disaster-manager",
+  "INCIDENT VALIDATOR": "incident-validator",
+  "RESPONSE TEAM": "response-team",
+  
+  // Handle potential variations
+  "USER": "disaster-manager", // Default fallback for generic USER role
+};
+
+/**
+ * Convert backend role string to UI role
+ * @param backendRole - Role from API (e.g., "INCIDENT VALIDATOR")
+ * @returns UI role (e.g., "incident-validator") or undefined if not found
+ */
+export function normalizeRole(backendRole: string | undefined): Role | undefined {
+  if (!backendRole) return undefined;
+  
+  const normalized = backendRole.trim().toUpperCase();
+  return roleMap[normalized];
+}
   
 
 export interface RoleNavItem {

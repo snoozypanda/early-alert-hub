@@ -21,9 +21,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
-      <div className="flex flex-1 overflow-hidden">
-        <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
-        <main className="flex-1 overflow-auto">
+      <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
+      <main
+        className="flex-1 overflow-auto transition-all duration-300"
+        style={{ marginLeft: sidebarCollapsed ? '64px' : '256px' }}
+      >
           {isLoading ? (
             <div className="h-full flex items-center justify-center">
               <Loader className="h-8 w-8 animate-spin text-primary" />
@@ -31,9 +33,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           ) : (
             <div className="p-6">{children}</div>
           )}
-        </main>
-      </div>
-      <Footer />
+          </main>
+          <Footer />
     </div>
   );
 };

@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Mail, Phone, MapPin, Calendar, Copy, Check } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Mail, Phone, MapPin, Calendar, Copy, Check, Loader } from "lucide-react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUpdateMyProfileMutation } from "@/lib/api/users";
+import { normalizeRole } from "@/config/roleUI";
 import { toast } from "sonner";
 
 const User = () => {
@@ -18,6 +20,18 @@ const User = () => {
     email: user?.email || "",
     username: user?.username || "",
   });
+  const { mutate: updateProfile, isPending } = useUpdateMyProfileMutation();
+
+  // Update form data when user changes
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        name: user.name || "",
+        email: user.email || "",
+        username: user.username || "",
+      });
+    }
+  }, [user]);
 
   if (!user) return null;
 
@@ -28,13 +42,26 @@ const User = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleSave = () => {
-    // TODO: Add API call to update user profile
-    setEditMode(false);
-    toast.success("Profile updated");
+  const handleSave = async () => {
+    try {
+      updateProfile(formData, {
+        onSuccess: () => {
+          setEditMode(false);
+          toast.success("Profile updated successfully");
+        },
+        onError: (error: any) => {
+          toast.error(error.response?.data?.message || "Failed to update profile");
+        },
+      });
+    } catch (error) {
+      toast.error("Failed to update profile");
+    }
   };
 
   const userRoles = Array.isArray(user.roles) ? user.roles : ["user"];
+  
+  // Normalize first role for display
+  const firstNormalizedRole = userRoles.length > 0 ? normalizeRole(userRoles[0]) : undefined;
 
   const roleColors: Record<string, string> = {
     "disaster-manager": "bg-red-100 text-red-800",
@@ -43,7 +70,16 @@ const User = () => {
     administrator: "bg-purple-100 text-purple-800",
   };
 
-  const roleColor = roleColors[userRoles[0]] || "bg-gray-100 text-gray-800";
+  const roleColor = firstNormalizedRole && roleColors[firstNormalizedRole] ? roleColors[firstNormalizedRole] : "bg-gray-100 text-gray-800";
+
+  // Format role display name
+  const formatRoleName = (role: string): string => {
+    const normalized = normalizeRole(role);
+    if (normalized) {
+      return normalized.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    }
+    return role.split(/[\s-]/).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+  };
 
   return (
     <DashboardLayout>
@@ -62,22 +98,51 @@ const User = () => {
         <Card className="border-border">
           <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-6">
             <div className="space-y-2">
-              <CardTitle className="text-2xl">{user.name}</CardTitle>
+              <CardTitle className="text-2xl">{editMode ? formData.name : user.name}</CardTitle>
               <div className="flex items-center gap-2">
                 <Badge className={roleColor}>
-                  {userRoles[0].replace(/-/g, " ").toUpperCase()}
+                  {formatRoleName(userRoles[0])}
                 </Badge>
                 {user.isAccountDisabled && (
                   <Badge variant="destructive">Disabled</Badge>
                 )}
               </div>
             </div>
-            {!editMode && (
-              <Button onClick={() => setEditMode(true)}>Edit Profile</Button>
-            )}
+            <div className="flex gap-2">
+              {editMode ? (
+                <>
+                  <Button onClick={handleSave} disabled={isPending}>
+                    {isPending && <Loader className="h-4 w-4 mr-2 animate-spin" />}
+                    Save Changes
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setEditMode(false)}
+                    disabled={isPending}
+                  >
+                    Cancel
+                  </Button>
+                </>
+              ) : (
+                <Button onClick={() => setEditMode(true)}>Edit Profile</Button>
+              )}
+            </div>
           </CardHeader>
 
           <CardContent className="space-y-6">
+            {/* Name Field */}
+            {editMode && (
+              <div className="space-y-2">
+                <Label htmlFor="name">Full Name</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  disabled={isPending}
+                />
+              </div>
+            )}
+
             {/* Contact Information */}
             <div className="space-y-4">
               <h3 className="font-semibold text-foreground">
@@ -85,53 +150,78 @@ const User = () => {
               </h3>
 
               <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-background">
-                  <div className="flex items-center gap-3">
-                    <Mail className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <p className="text-sm text-muted-foreground">Email</p>
-                      <p className="text-foreground font-medium">
-                        {user.email}
-                      </p>
-                    </div>
+                {editMode ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      disabled={isPending}
+                    />
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleCopy(user.email)}
-                  >
-                    {copied ? (
-                      <Check className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
+                ) : (
+                  <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-background">
+                    <div className="flex items-center gap-3">
+                      <Mail className="h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Email</p>
+                        <p className="text-foreground font-medium">
+                          {user.email}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleCopy(user.email)}
+                    >
+                      {copied ? (
+                        <Check className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                )}
 
-                <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-background">
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs font-mono text-muted-foreground">
-                      @
-                    </span>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Username</p>
-                      <p className="text-foreground font-medium">
-                        {user.username}
-                      </p>
-                    </div>
+                {editMode ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="username">Username</Label>
+                    <Input
+                      id="username"
+                      value={formData.username}
+                      onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                      disabled={isPending}
+                    />
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleCopy(user.username)}
-                  >
-                    {copied ? (
-                      <Check className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
+                ) : (
+                  <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-background">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs font-mono text-muted-foreground">
+                        @
+                      </span>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Username</p>
+                        <p className="text-foreground font-medium">
+                          {user.username}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleCopy(user.username)}
+                    >
+                      {copied ? (
+                        <Check className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -187,11 +277,15 @@ const User = () => {
               <h3 className="font-semibold text-foreground">Assigned Roles</h3>
               <div className="flex flex-wrap gap-2">
                 {Array.isArray(user.roles) && user.roles.length > 0 ? (
-                  user.roles.map((role) => (
-                    <Badge key={role} variant="secondary" className="text-sm">
-                      {role.replace(/-/g, " ").toUpperCase()}
-                    </Badge>
-                  ))
+                  user.roles.map((role) => {
+                    const normalized = normalizeRole(role);
+                    const roleColorClass = normalized && roleColors[normalized] ? roleColors[normalized] : "bg-gray-100 text-gray-800";
+                    return (
+                      <Badge key={role} className={`text-sm ${roleColorClass}`}>
+                        {formatRoleName(role)}
+                      </Badge>
+                    );
+                  })
                 ) : (
                   <p className="text-sm text-muted-foreground">
                     No roles assigned
