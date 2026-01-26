@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Eye, EyeOff, Shield } from "lucide-react";
+import { Eye, EyeOff, Shield, Loader } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,28 +11,72 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { toast } from "sonner";
+import { useLoginUserMutation } from "@/lib/api/userLogin";
 import { useAuth } from "@/contexts/AuthContext";
-import { UserRole } from "@/lib/mockData";
+import { LoginUserType } from "@/types/types";
 
 const Login = () => {
+  const { mutate, isPending } = useLoginUserMutation();
+  const { isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
-  const { login } = useAuth();
-  const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [role, setRole] = useState<UserRole>("disaster-manager");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [showPassword, setShowPassword] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
+  const [formData, setFormData] = useState<LoginUserType>({
+    username: "",
+    password: "",
+  });
+
+  // Redirect to dashboard if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Don't render login form if already authenticated
+  if (isAuthenticated) {
+    return null;
+  }
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    login(email, password, role);
-    navigate("/dashboard");
+
+    if (!formData.username || !formData.password) {
+      toast.error("Username and password are required");
+      return;
+    }
+
+    try {
+      const submissionData: LoginUserType = {
+        username: formData.username,
+        password: formData.password,
+      };
+
+      mutate(submissionData, {
+        onSuccess: () => {
+          toast.success("Login successful!");
+          // The useEffect above will automatically redirect to /dashboard
+          // when isAuthenticated becomes true
+        },
+        onError: (error: any) => {
+          const errorMessage = error?.response?.data?.message || "Invalid credentials";
+          toast.error(errorMessage);
+        },
+      });
+    } finally {
+      setLocalError(null);
+    }
   };
 
   return (
@@ -60,13 +104,15 @@ const Login = () => {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email / Phone</Label>
+                <Label htmlFor="username">Username</Label>
                 <Input
-                  id="email"
+                  id="username"
                   type="text"
-                  placeholder="Enter your email or phone"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your username"
+                  value={formData.username}
+                  onChange={(e) =>
+                    setFormData({ ...formData, username: e.target.value })
+                  }
                   className="bg-card"
                 />
               </div>
@@ -78,8 +124,10 @@ const Login = () => {
                     id="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    value={formData.password}
+                    onChange={(e) =>
+                      setFormData({ ...formData, password: e.target.value })
+                    }
                     className="bg-card pr-10"
                   />
                   <button
@@ -96,32 +144,15 @@ const Login = () => {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="role">Select Role</Label>
-                <Select
-                  value={role}
-                  onValueChange={(value: UserRole) => setRole(value)}
-                >
-                  <SelectTrigger className="bg-card">
-                    <SelectValue placeholder="Select your role" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-border">
-                    <SelectItem value="disaster-manager">
-                      Disaster Manager
-                    </SelectItem>
-                    <SelectItem value="response-team">
-                      Emergency Response Team
-                    </SelectItem>
-                    <SelectItem value="incident-validator">
-                      Incident Validator
-                    </SelectItem>
-                    <SelectItem value="administrator">Administrator</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <Button type="submit" className="w-full">
-                Sign In
+              <Button type="submit" className="w-full" disabled={isPending || isLoading}>
+                {isPending || isLoading ? (
+                  <>
+                    <Loader className="h-4 w-4 mr-2 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  "Sign In"
+                )}
               </Button>
 
               <div className="text-center">

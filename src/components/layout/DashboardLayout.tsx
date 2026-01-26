@@ -4,13 +4,14 @@ import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 import Footer from './Footer';
 import { useAuth } from '@/contexts/AuthContext';
+import { Loader } from 'lucide-react';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   if (!isAuthenticated) {
@@ -20,15 +21,20 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
-      <div className="flex flex-1 overflow-hidden">
-        <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
-        <main className="flex-1 overflow-auto">
-          <div className="p-6">
-            {children}
-          </div>
-        </main>
-      </div>
-      <Footer />
+      <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
+      <main
+        className="flex-1 overflow-auto transition-all duration-300"
+        style={{ marginLeft: sidebarCollapsed ? '64px' : '256px' }}
+      >
+          {isLoading ? (
+            <div className="h-full flex items-center justify-center">
+              <Loader className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <div className="p-6">{children}</div>
+          )}
+          </main>
+          <Footer />
     </div>
   );
 };

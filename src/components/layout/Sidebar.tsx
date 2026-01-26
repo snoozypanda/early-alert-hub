@@ -5,7 +5,8 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
-import { roleUI } from "@/config/roleUI";
+import { roleUI, normalizeRole } from "@/config/roleUI";
+import { Loader } from "lucide-react";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -13,17 +14,105 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const { t } = useLanguage();
 
-  if (!user) return null;
+  // Show skeleton/placeholder while loading
+  if (isLoading || !user) {
+    return (
+      <aside
+        className={cn(
+          "fixed left-0 top-16 h-[calc(100vh-4rem)] border-r border-border bg-card transition-all duration-300 flex flex-col",
+          collapsed ? "w-16" : "w-64"
+        )}
+      >
+        <nav className="flex-1 p-2 space-y-1 flex items-center justify-center">
+          <Loader className="h-6 w-6 animate-spin text-muted-foreground" />
+        </nav>
+        <div className="p-2 border-t border-border">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-center"
+            onClick={onToggle}
+          >
+            {collapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+      </aside>
+    );
+  }
 
-  const links = roleUI[user.role];
+  // Handle user.roles array - normalize and get the first matching role
+  let userRole: string | undefined;
+  
+  if (Array.isArray(user.roles) && user.roles.length > 0) {
+    // Try to find a role that can be normalized
+    for (const role of user.roles) {
+      const normalized = normalizeRole(role);
+      if (normalized) {
+        userRole = normalized;
+        break;
+      }
+    }
+    // If no valid role found, log the raw roles for debugging
+    if (!userRole) {
+      console.warn('No valid role found in user roles:', user.roles);
+    }
+  }
+
+  // Debug logging
+  if (!userRole || !(userRole in roleUI)) {
+    console.warn('No valid UI role found for user:', { 
+      roles: user.roles, 
+      normalizedUserRole: userRole 
+    });
+  }
+
+  const links = userRole && userRole in roleUI 
+    ? roleUI[userRole as keyof typeof roleUI] 
+    : [];
+
+  if (!links || links.length === 0) {
+    // Fallback: show empty sidebar with collapse button
+    return (
+      <aside
+        className={cn(
+          "fixed left-0 top-16 h-[calc(100vh-4rem)] border-r border-border bg-card transition-all duration-300 flex flex-col",
+          collapsed ? "w-16" : "w-64"
+        )}
+      >
+        <nav className="flex-1 p-2 flex items-center justify-center">
+          <p className="text-xs text-muted-foreground text-center">
+            Role: {userRole || 'unknown'}
+          </p>
+        </nav>
+        <div className="p-2 border-t border-border">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full justify-center"
+            onClick={onToggle}
+          >
+            {collapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+      </aside>
+    );
+  }
 
   return (
     <aside
       className={cn(
-        "h-[calc(100vh-4rem)] border-r border-border bg-card transition-all duration-300 flex flex-col",
+        "fixed left-0 top-16 h-[calc(100vh-4rem)] border-r border-border bg-card transition-all duration-300 flex flex-col",
         collapsed ? "w-16" : "w-64"
       )}
     >

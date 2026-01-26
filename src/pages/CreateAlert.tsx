@@ -15,6 +15,9 @@ import {
 } from '@/components/ui/select';
 import { AlertTriangle, Map, Send } from 'lucide-react';
 import MapPlaceholder from '@/components/dashboard/MapPlaceholder';
+import { useNavigate } from "react-router-dom";
+import { api } from "@/lib/api";
+import { toast } from "sonner";
 
 const CreateAlert = () => {
   const [severity, setSeverity] = useState([50]);
@@ -34,10 +37,69 @@ const CreateAlert = () => {
 
   const severityInfo = getSeverityLabel(severity[0]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  // Need latitude/longitude for Incident. UI doesn't have it easily (has map placeholder).
+  // We will default to 0,0 or add hidden fields if we wanted to be precise.
+  // For now, hardcode 0,0 as placeholder.
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock submit - UI only
-    alert('Alert would be issued (UI demo)');
+    setLoading(true);
+
+    try {
+        // 1. Create Incident
+        // Map Severity Slider 0-100 to low/medium/high/critical
+        let severityLevel = "low";
+        const val = severity[0];
+        if (val >= 25) severityLevel = "medium";
+        if (val >= 50) severityLevel = "high";
+        if (val >= 75) severityLevel = "critical";
+
+        // Construct description with type
+        const fullDescription = `[${formData.disasterType}] ${formData.description}. Area: ${formData.affectedArea}`;
+
+        const incidentPayload = {
+            title: formData.title,
+            description: fullDescription,
+            latitude: 0, // Placeholder
+            longitude: 0, // Placeholder
+            severityLevel: severityLevel,
+            attachments: []
+        };
+
+        const incidentRes = await api.post("/incident", incidentPayload);
+        const incidentId = incidentRes.data.data.id;
+
+        // 2. Create Disaster linked to Incident
+        // Generate a random disasterID or use timestamp
+        const disasterID = `DIS-${Date.now()}`;
+        
+        const disasterPayload = {
+            disasterID: disasterID,
+            scope: formData.affectedArea,
+            status: "active", // Default status
+            affectedPopulation: 0, // Default as UI doesn't have it
+            incidentId: incidentId.toString(), // Ensure string if API expects string
+            attachments: []
+        };
+
+        await api.post("/disaster", disasterPayload);
+
+        toast.success("Alert issued successfully", {
+            description: "Incident and Disaster records created."
+        });
+        navigate("/alerts");
+
+    } catch (error: any) {
+        console.error("Failed to issue alert", error);
+        toast.error("Failed to issue alert", {
+           description: error.response?.data?.error?.message || "Unknown error occurred" 
+        });
+    } finally {
+        setLoading(false);
+    }
   };
 
   return (

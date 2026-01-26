@@ -1,50 +1,74 @@
-import React, { createContext, useContext, useState, ReactNode } from "react";
-import { UserRole } from "@/lib/mockData";
+import React, { createContext, useContext, ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { api } from "@/lib/api";
+import { useMyProfileQuery } from "@/lib/api/users";
+import { User, LoginInput, AuthTokenOutput, BaseGenericApiResponse } from "@/types/api";
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-}
+export type UserRole = "disaster-manager" | "administrator" | "incident-validator" | "response-team" | string;
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string, role: UserRole) => void;
+  login: (data: LoginInput) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const queryClient = useQueryClient();
 
-  const login = (email: string, _password: string, role: UserRole) => {
-    // Mock login - just set user based on role
-    setUser({
-      id: "1",
-      name:
-        role === "disaster-manager"
-          ? "Dr. Abebe Kebede"
-          : role === "incident-validator"
-          ? "Agent Meron Tadesse"
-          : role === "administrator"
-          ? "Mr. Tesfaye Bekele"
-          : "Response Team Member",
+  // Only fetch user if token exists
+  const { data: user = null, isLoading, isError } = useMyProfileQuery();
+  const hasToken = !!localStorage.getItem("accessToken");
 
-      email,
-      role,
-    });
+  // If token exists but user failed to load, clear token
+  if (hasToken && isError && !isLoading) {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+  }
+
+  const login = async (data: LoginInput) => {
+    try {
+      const response = await api.post<BaseGenericApiResponse<AuthTokenOutput>>("/auth/login", data);
+      const { accessToken, refreshToken } = response.data.data;
+
+      // Store tokens in localStorage
+      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
+
+      // Refetch user data and invalidate other queries
+      await queryClient.refetchQueries({ queryKey: ["profile"] });
+    } catch (error) {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      console.error("Login failed", error);
+      throw error;
+    }
   };
 
   const logout = () => {
-    setUser(null);
+    // Clear storage
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+
+    // Clear all queries
+    queryClient.clear();
+
+    // Redirect to login
+    window.location.href = "/login";
   };
 
   return (
     <AuthContext.Provider
-      value={{ user, login, logout, isAuthenticated: !!user }}
+      value={{
+        user,
+        login,
+        logout,
+        isAuthenticated: !!user && hasToken,
+        isLoading: hasToken ? isLoading : false,
+      }}
     >
       {children}
     </AuthContext.Provider>
