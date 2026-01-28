@@ -23,6 +23,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const fetchUser = async () => {
       const token = localStorage.getItem("accessToken");
+      
       if (token) {
         try {
           const response = await api.get<BaseGenericApiResponse<User>>("/users/me");
