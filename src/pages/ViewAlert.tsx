@@ -31,15 +31,36 @@ const ViewAlert = () => {
         </CardHeader>
 
         <CardContent className="space-y-4">
-          <Input value={alert.id} disabled />
-          <Input value={alert.type} disabled />
-          <Input value={alert.area} disabled />
-          <Input value={alert.severity} disabled />
-          <Input value={alert.status} disabled />
-          <Input value={alert.date} disabled />
-
-          <Textarea value={alert.description} disabled />
-
+          <div className="space-y-1">
+            <label htmlFor="id">Alert Id</label>{" "}
+            <Input value={alert.id} disabled />
+          </div>
+          <div className="space-y-1">
+            {" "}
+            <label htmlFor="type">Alert </label>{" "}
+            <Input value={alert.type} disabled />
+          </div>
+          <div className="space-y-1">
+            {" "}
+            <label htmlFor="area">Area</label>{" "}
+            <Input value={alert.area} disabled />
+          </div>
+          <div className="space-y-1">
+            <label htmlFor="severity">Severity</label>{" "}
+            <Input value={alert.severity} disabled />
+          </div>
+          <div className="space-y-1">
+            <label htmlFor="status">Status</label>{" "}
+            <Input value={alert.status} disabled />
+          </div>
+          <div className="space-y-1">
+            <label htmlFor="date">Date</label>{" "}
+            <Input value={alert.date} disabled />
+          </div>
+          <div className="space-y-1">
+            <label htmlFor="description">Description</label>
+            <Textarea value={alert.description} disabled />
+          </div>
           <div className="flex justify-end">
             <Button variant="outline" onClick={() => navigate(-1)}>
               Back

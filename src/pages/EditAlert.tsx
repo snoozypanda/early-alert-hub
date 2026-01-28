@@ -72,57 +72,67 @@ const EditAlert = () => {
 
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              placeholder="Type"
-              value={formData.type}
-              onChange={(e) => updateField("type", e.target.value)}
-            />
-
-            <Input
-              placeholder="Area"
-              value={formData.area}
-              onChange={(e) => updateField("area", e.target.value)}
-            />
-
-            <Select
-              value={formData.severity}
-              onValueChange={(value) =>
-                updateField("severity", value as Alert["severity"])
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select severity" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="low">Low</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="critical">Critical</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={formData.status}
-              onValueChange={(value) =>
-                updateField("status", value as Alert["status"])
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="monitoring">Monitoring</SelectItem>
-                <SelectItem value="resolved">Resolved</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Textarea
-              placeholder="Description"
-              value={formData.description}
-              onChange={(e) => updateField("description", e.target.value)}
-            />
-
+            <div className="space-y-1">
+              <label htmlFor="type">Alert</label>{" "}
+              <Input
+                placeholder="Type"
+                value={formData.type}
+                onChange={(e) => updateField("type", e.target.value)}
+              />
+            </div>
+            <div className="space-y-1">
+              <label htmlFor="area">Area</label>{" "}
+              <Input
+                placeholder="Area"
+                value={formData.area}
+                onChange={(e) => updateField("area", e.target.value)}
+              />
+            </div>{" "}
+            <div className="space-y-1">
+              <label htmlFor="severity">Severity</label>
+              <Select
+                value={formData.severity}
+                onValueChange={(value) =>
+                  updateField("severity", value as Alert["severity"])
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select severity" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="critical">Critical</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>{" "}
+            <div className="space-y-1">
+              <label htmlFor="status">Status</label>
+              <Select
+                value={formData.status}
+                onValueChange={(value) =>
+                  updateField("status", value as Alert["status"])
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="monitoring">Monitoring</SelectItem>
+                  <SelectItem value="resolved">Resolved</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <label htmlFor="description">Description</label>
+              <Textarea
+                placeholder="Description"
+                value={formData.description}
+                onChange={(e) => updateField("description", e.target.value)}
+              />
+            </div>
             <div className="flex justify-end gap-2">
               <Button
                 type="button"
