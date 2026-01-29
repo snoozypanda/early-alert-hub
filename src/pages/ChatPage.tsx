@@ -51,6 +51,7 @@ const ChatPage = () => {
             <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
               <MessageSquare className="h-6 w-6 text-primary" />
               Coordination Chat
+              
             </h1>
             <p className="text-muted-foreground">Real-time communication with teams</p>
           </div>

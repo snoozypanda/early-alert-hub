@@ -52,6 +52,8 @@ export interface AuthTokenOutput {
 // --- Incident ---
 
 export interface Incident {
+  severity: "medium" | "low" | "high" | "critical";
+  area: ReactNode;
   id: number;
   title: string;
   description: string;

@@ -12,8 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Incident, mockIncidents } from "@/lib/mockData";
 import { useAlerts } from "@/contexts/AlertContext";
+import { Incident, mockIncidents } from "@/lib/mockData";
 
 const EditIncidentValidator = () => {
   const { incidentId } = useParams<{ incidentId: string }>();
@@ -21,13 +21,10 @@ const EditIncidentValidator = () => {
   const { createAlertFromIncident } = useAlerts();
 
   const incident = mockIncidents.find((i) => i.id === incidentId);
-
   const [formData, setFormData] = useState<Incident | null>(null);
 
   useEffect(() => {
-    if (incident) {
-      setFormData({ ...incident });
-    }
+    if (incident) setFormData({ ...incident });
   }, [incident]);
 
   const updateField = <K extends keyof Incident>(
@@ -41,14 +38,12 @@ const EditIncidentValidator = () => {
     e.preventDefault();
     if (!formData) return;
 
-    // Approval → Alert creation
     if (formData.status === "approved") {
       createAlertFromIncident(formData);
       navigate("/alerts");
-      return;
+    } else {
+      navigate("/incidents");
     }
-
-    navigate("/incidents");
   };
 
   if (!formData) {
@@ -65,16 +60,14 @@ const EditIncidentValidator = () => {
         <CardHeader>
           <CardTitle>Validate Incident</CardTitle>
         </CardHeader>
-
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Read-only fields */}
-            <Input value={formData.type} readOnly />
-            <Input value={formData.location} readOnly />
-            <Input value={formData.reportedBy} readOnly />
+            {/* Read-only incident info */}
+            <Input value={formData.title} readOnly />
             <Textarea value={formData.description} readOnly />
+            <Input value={formData.area} readOnly placeholder="Area" />
 
-            {/* Validator controls */}
+            {/* Editable fields */}
             <Select
               value={formData.status}
               onValueChange={(value) =>
@@ -82,7 +75,7 @@ const EditIncidentValidator = () => {
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Validation status" />
+                <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="pending">Pending</SelectItem>
@@ -92,13 +85,13 @@ const EditIncidentValidator = () => {
             </Select>
 
             <Select
-              value={formData.priority}
+              value={formData.severity}
               onValueChange={(value) =>
-                updateField("priority", value as Incident["priority"])
+                updateField("severity", value as Incident["severity"])
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Priority" />
+                <SelectValue placeholder="Severity" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="low">Low</SelectItem>
@@ -108,6 +101,7 @@ const EditIncidentValidator = () => {
               </SelectContent>
             </Select>
 
+            {/* Actions */}
             <div className="flex justify-end gap-2">
               <Button
                 type="button"
