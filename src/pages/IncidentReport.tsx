@@ -63,24 +63,20 @@ const statusColors: Record<Incident["status"], string> = {
 const IncidentReport = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const [formData, setFormData] = useState<Incident & {
-    latitude: number;
-    longitude: number;
-  }>({
+  const [formData, setFormData] = useState<Incident>({
     title: "",
     description: "",
     severity: "medium",
     status: "pending",
     area: "",
-    attachment: "",
-    latitude: 0,
-    longitude: 0,
+    attachments: "",
   });
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["incidents"],
     queryFn: async () => {
-      const res = await api.get<BaseGenericApiResponse<Incident[]>>("/incident");
+      const res =
+        await api.get<BaseGenericApiResponse<Incident[]>>("/incident");
       return res.data;
     },
   });

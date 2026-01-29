@@ -29,7 +29,7 @@ import {
 } from "@/lib/api/incidents";
 import { toast } from "sonner";
 import { Incident } from "@/lib/mockData";
-
+import { useNavigate } from "react-router-dom";
 const Incidents = () => {
   const { user } = useAuth();
   const { data: incidents = [], isLoading } = useIncidentsQuery();
@@ -55,7 +55,7 @@ const Incidents = () => {
   const isIncidentValidator = user?.roles?.some(
     (role) => role.toUpperCase() === "INCIDENT VALIDATOR",
   );
-
+  const navigate = useNavigate();
   // const handleCreate = () => {
   //   if (!formData.title || !formData.description) {
   //     toast.error("Title and description are required");
@@ -165,7 +165,7 @@ const Incidents = () => {
 
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
-              <Button>Create Incident</Button>
+              {/* <Button>Create Incident</Button> */}
             </DialogTrigger>
 
             <DialogContent>
@@ -304,6 +304,21 @@ const Incidents = () => {
                           <Loader className="h-4 w-4 animate-spin" />
                         ) : (
                           <Trash2 className="h-4 w-4" />
+                        )}
+                      </Button>
+
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() =>
+                          navigate("/incidents/edit/${incident.id}")
+                        }
+                        disabled={isDeleting}
+                      >
+                        {isDeleting ? (
+                          <Loader className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Edit2 className="h-4 w-4" />
                         )}
                       </Button>
                     </div>

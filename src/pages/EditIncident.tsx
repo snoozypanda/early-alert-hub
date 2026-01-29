@@ -1,3 +1,4 @@
+// EditIncidentValidator.tsx
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -20,13 +21,17 @@ const EditIncidentValidator = () => {
   const navigate = useNavigate();
   const { createAlertFromIncident } = useAlerts();
 
+  // Find the incident
   const incident = mockIncidents.find((i) => i.id === incidentId);
+
+  // Form state
   const [formData, setFormData] = useState<Incident | null>(null);
 
   useEffect(() => {
     if (incident) setFormData({ ...incident });
   }, [incident]);
 
+  // Update a field
   const updateField = <K extends keyof Incident>(
     key: K,
     value: Incident[K],
@@ -34,10 +39,12 @@ const EditIncidentValidator = () => {
     setFormData((prev) => (prev ? { ...prev, [key]: value } : prev));
   };
 
+  // Handle submit
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData) return;
 
+    // If approved, create alert
     if (formData.status === "approved") {
       createAlertFromIncident(formData);
       navigate("/alerts");
@@ -62,45 +69,65 @@ const EditIncidentValidator = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Read-only incident info */}
-            <Input value={formData.title} readOnly />
-            <Textarea value={formData.description} readOnly />
-            <Input value={formData.area} readOnly placeholder="Area" />
+            {/* Read-only info */}
+            <div className="space-y-1">
+              <label htmlFor="title">Title</label>
+              <Input value={formData.title} readOnly placeholder="Title" />
+            </div>
+            <div className="space-y-1">
+              <label htmlFor="description">Description</label>
+              <Textarea
+                value={formData.description}
+                readOnly
+                placeholder="Description"
+              />
+            </div>
+            <div className="space-y-1">
+              <label htmlFor="area">Area</label>
+              <Input value={formData.area} readOnly placeholder="Area" />
+            </div>
+            <div className="space-y-1">
+              <label htmlFor="status">Status</label>
+              {/* Editable fields */}
+              <Select
+                value={formData.status}
+                onValueChange={(value) =>
+                  updateField("status", value as Incident["status"])
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <label htmlFor="severity">Severity</label>
 
-            {/* Editable fields */}
-            <Select
-              value={formData.status}
-              onValueChange={(value) =>
-                updateField("status", value as Incident["status"])
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="approved">Approved</SelectItem>
-                <SelectItem value="rejected">Rejected</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={formData.severity}
-              onValueChange={(value) =>
-                updateField("severity", value as Incident["severity"])
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Severity" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="low">Low</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="critical">Critical</SelectItem>
-              </SelectContent>
-            </Select>
-
+              <Select
+                value={formData.severity}
+                onValueChange={(value) =>
+                  updateField("severity", value as Incident["severity"])
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Severity" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="critical">Critical</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <img src={incident.attachment}></img>
+            </div>
             {/* Actions */}
             <div className="flex justify-end gap-2">
               <Button

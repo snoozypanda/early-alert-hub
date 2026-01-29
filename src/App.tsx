@@ -62,7 +62,7 @@ const App = () => (
                 <Route path="/alerts/view/:alertId" element={<ViewAlert />} />
                 <Route path="/alerts/edit/:alertId" element={<EditAlert />} />
                 <Route
-                  path="/incidents/edit/:incidentId"
+                  path="/incidents/edit/${incident.id}"
                   element={<EditIncident />}
                 />
                 <Route path="/settings" element={<Setting />} />
