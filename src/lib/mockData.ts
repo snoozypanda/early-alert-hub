@@ -317,6 +317,7 @@ export const translations = {
     log: "Log",
     // tasks: "Tasks",
     incidents: "Incidents",
+    all: "all",
   },
   am: {
     dashboard: "ዳሽቦርድ",
@@ -338,6 +339,11 @@ export const translations = {
     tasks: "ተግባሮች",
     incidents: "ከስተቶች",
     broadcast: "ብሮድካስት ማንኪያዎች",
+    view: " ",
+    Manage: "ከስተቶችሀን መቆጣጠር",
+    and: "እና",
+    // all፡"ሁሉም",
+    // submitted፡"የገወን"
   },
 };
 export type TranslationKey = keyof typeof translations.en;

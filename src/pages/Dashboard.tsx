@@ -420,7 +420,7 @@ const AdministratorDashboard = () => {
           </h1>
           <p className="text-muted-foreground">Manage users and system logs.</p>
         </div>
-        <div className="flex gap-2">
+        {/* <div className="flex gap-2">
           <Button 
             className="gap-2"
             onClick={() => navigate("/users")}
@@ -429,7 +429,7 @@ const AdministratorDashboard = () => {
             <ArrowRight className="h-4 w-4" />
             Manage Users
           </Button>
-        </div>
+        </div> */}
       </div>
 
       {disastersLoading ? (

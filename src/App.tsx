@@ -8,9 +8,10 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AlertsProvider } from "./contexts/AlertContext";
 // Pages
 import Login from "./pages/Login";
-import Register from "./pages/Register";
+import RegisterForm from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
-import User from "./pages/User";
+// import User from "./pages/User";
+import UsersPage from "./pages/Users";
 import AlertsManagement from "./pages/AlertsManagement";
 import CreateAlert from "./pages/CreateAlert";
 import ResourcesPage from "./pages/ResourcesPage";
@@ -24,6 +25,7 @@ import EditAlert from "./pages/EditAlert";
 import EditIncident from "./pages/EditIncident";
 import Incidents from "./pages/Incidents";
 import Disasters from "./pages/Disasters";
+import Setting from "./pages/Setting";
 // import BroadcastAlert from "./pages/BroadcastAlert";
 
 const queryClient = new QueryClient();
@@ -40,9 +42,10 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Navigate to="/login" replace />} />
                 <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
+                <Route path="/register" element={<RegisterForm />} />
                 <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/users" element={<User />} />
+                {/* <Route path="/users" element={<User />} /> */}
+                <Route path="/users" element={<UsersPage />} />
                 <Route path="/alerts" element={<AlertsManagement />} />
                 <Route path="/create-alert" element={<CreateAlert />} />
                 <Route path="/resources" element={<ResourcesPage />} />
@@ -54,7 +57,6 @@ const App = () => (
                 <Route path="/public-alerts" element={<AlertsManagement />} />
                 <Route path="/safety" element={<SafetyPage />} />
                 <Route path="/reports" element={<AlertsManagement />} />
-                <Route path="/settings" element={<Dashboard />} />
                 <Route path="/disasters" element={<Disasters />} />
                 <Route path="*" element={<NotFound />} />
                 <Route path="/alerts/view/:alertId" element={<ViewAlert />} />
@@ -63,6 +65,7 @@ const App = () => (
                   path="/incidents/edit/:incidentId"
                   element={<EditIncident />}
                 />
+                <Route path="/settings" element={<Setting />} />
               </Routes>
             </BrowserRouter>
           </AlertsProvider>
