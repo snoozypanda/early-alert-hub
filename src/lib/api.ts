@@ -1,7 +1,7 @@
 import axios from "axios";
 import { z } from "zod";
 
-const VITE_API_URL = z.url();
+const VITE_API_URL = z.string().url();
 const API_BASE_URL =
   VITE_API_URL.parse(import.meta.env.VITE_API_URL) + "/api/v1";
 
